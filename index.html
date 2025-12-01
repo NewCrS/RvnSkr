@@ -1,12 +1,113 @@
-<html>
-  <head>
-    <title>Bio Link RevenantSkr</title>
-  </head>
-  <body>
-    <h1>Рэндзо Наудзен – RevenantSkr</h1>
-    <a href="https://zalo.me/0123456789">Zalo</a><br>
-    <a href="https://instagram.com/username">Instagram</a><br>
-    <a href="https://tiktok.com/@username">TikTok</a><br>
-    <a href="qr.html">QR Thẻ ID</a><br>
-  </body>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Revenantskr</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #060606;
+      color: #e0e0e0;
+    }
+    header {
+      padding: 40px 20px;
+      text-align: center;
+      background: linear-gradient(180deg, #0a0a0a, #000);
+      border-bottom: 2px solid #333;
+    }
+    .logo {
+      font-size: 48px;
+      font-weight: bold;
+      letter-spacing: 8px;
+      color: #ff2a2a;
+      text-shadow: 0 0 20px #ff0000;
+    }
+    nav {
+      display: flex;
+      justify-content: center;
+      gap: 40px;
+      margin-top: 20px;
+    }
+    nav a {
+      text-decoration: none;
+      color: #ccc;
+      font-size: 18px;
+    }
+    nav a:hover {
+      color: #ff2a2a;
+    }
+    .container {
+      padding: 40px;
+      text-align: center;
+    }
+    .id-box {
+      margin-top: 40px;
+    }
+    input {
+      padding: 10px 14px;
+      font-size: 16px;
+      background: #111;
+      border: 1px solid #444;
+      color: #fff;
+    }
+    button {
+      padding: 10px 18px;
+      background: #ff2a2a;
+      border: none;
+      color: #fff;
+      cursor: pointer;
+      margin-left: 10px;
+    }
+    button:hover {
+      background: #cc0000;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">REVENANTSKR</div>
+    <nav>
+      <a href="#">Home</a>
+      <a href="#about">About</a>
+      <a href="#id">ID</a>
+    </nav>
+  </header>
+
+  <div class="container" id="home">
+    <h2>WELCOME, OPERATIVE</h2>
+    <p>Sự hiện diện của bạn đã được ghi nhận. Chọn mục hoặc xác thực qua ID.</p>
+
+    <div class="id-box" id="id">
+      <h3>Xác thực ID</h3>
+      <input id="idInput" placeholder="Nhập ID của bạn" />
+      <button onclick="checkID()">Vào</button>
+    </div>
+  </div>
+
+  <script>
+    function checkID() {
+      const id = document.getElementById("idInput").value.trim();
+
+      if (!id) {
+        alert("Hãy nhập ID.");
+        return;
+      }
+
+      // Tuỳ chỉnh ID và trang đích
+      const routes = {
+        "REVEN-01": "leader.html",
+        "REVEN-02": "officer.html",
+        "REVEN-03": "member.html",
+      };
+
+      if (routes[id]) {
+        window.location.href = routes[id];
+      } else {
+        alert("ID không hợp lệ hoặc không được cấp quyền.");
+      }
+    }
+  </script>
+</body>
 </html>
