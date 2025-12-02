@@ -6,7 +6,6 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 	<title>Revenantskr - Phase Shift UI</title>
 	<style>
-		/* --- CẤU HÌNH CƠ BẢN --- */
 		body {
 			margin: 0;
 			font-family: Arial, Sans-serif, monospace;
@@ -15,29 +14,34 @@
 			overflow-x: hidden;
 		}
 		
-		/* --- LAYOUT CONTAINER --- */
 		.interface-wrapper {
 			position: relative;
 			width: 100%;
 			background: radial-gradient(circle at center, #111 0%, #000 100%);
+            height: 140px; 
+            transition: height 0.6s cubic-bezier(0.22, 1, 0.36, 1);
 		}
+
+        body.mode-home .interface-wrapper,
+        body.mode-general .interface-wrapper {
+            height: 60px; 
+        }
 		
-		/* --- HEADER (80px) --- */
 		header {
-			height: 80px;
-			display: flex;
-			align-items: center;
-			justify-content: center;
-			background: rgba(10, 10, 10, 0.9);
-			border-bottom: 1px solid #333;
-			position: relative;
-			z-index: 2;
-			
-			/* Animation settings */
-			transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1),
-				filter 0.6s ease,
-				opacity 0.6s ease;
+		    height: 80px;
+		    display: flex;
+		    align-items: center;
+		    justify-content: center;
+		    background: rgba(5, 5, 5, 0.7); 
+		    border-bottom: 1px solid transparent; 
+		    position: relative;
+		    z-index: 2;
+		    backdrop-filter: blur(5px); 
+		    transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1),
+		        filter 0.6s ease,
+		        opacity 0.6s ease;
 		}
+
 		
 		.logo {
 			font-size: 36px;
@@ -47,17 +51,17 @@
 			text-shadow: 0 0 15px rgba(0, 187, 255, 0.6);
 			user-select: none;
 			transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+			transform: scale(1.2);
 		}
 		
-		/* --- NAV (CLASSLIST - 60px) --- */
 		nav {
 			height: 60px;
 			display: flex;
 			align-items: center;
 			justify-content: center;
-			gap: 40px;
-			background: rgba(0, 0, 0, 0.8);
-			position: relative;
+			gap: 50px; 
+			background: transparent; 
+			position: relative; 
 			z-index: 10;
 			border-bottom: 1px solid #222;
 			
@@ -65,7 +69,25 @@
 				filter 0.6s ease;
 		}
 		
+		.tab-slider {
+			position: absolute;
+			height: 100%; 
+			top: 0;
+			left: 0;
+			z-index: 1; 
+			pointer-events: none; 
+			
+			border-left: 2px solid #00BBFF;
+			border-right: 2px solid #00BBFF;
+			background: transparent; 
+
+			transition: width 0.3s cubic-bezier(0.22, 1, 0.36, 1), 
+						transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+		}
+
 		nav a {
+			position: relative; 
+            z-index: 2;
 			text-decoration: none;
 			color: #888;
 			font-size: 14px;
@@ -74,29 +96,40 @@
 			text-transform: uppercase;
 			letter-spacing: 2px;
 			transition: 0.3s;
-			padding: 10px 20px;
+			padding: 10px 20px; 
 			border: 1px solid transparent;
 		}
 		
 		nav a:hover,
 		nav a.active-link {
 			color: #fff;
-			border: 1px solid #00BBFF;
-			background: rgba(0, 187, 255, 0.1);
-			box-shadow: 0 0 10px rgba(0, 187, 255, 0.2);
+			text-shadow: 0 0 5px rgba(0, 187, 255, 0.5);
+			border: none !important;
+			background: transparent !important;
+			box-shadow: none !important;
 		}
 		
-		/* --- CONTENT AREA --- */
 		.content-area {
-			padding: 60px 20px;
+			padding-top: 140px; 
+			padding-bottom: 60px;
+			padding-left: 20px;
+			padding-right: 20px;
 			text-align: center;
 			min-height: 400px;
+            transition: padding-top 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+            position: relative; /* Thêm position để kích hoạt z-index */
+            z-index: 5; /* Đặt z-index cao hơn nền (nhưng thấp hơn Nav/Header) */
 		}
+
+        body.mode-home .content-area,
+        body.mode-general .content-area {
+            padding-top: 60px;
+        }
 		
 		.tab-content {
 			display: none;
 			opacity: 0;
-			transform: translateY(20px);
+			transform: translateY(40px);
 			animation: fadeInContent 0.8s forwards;
 		}
 		
@@ -111,21 +144,17 @@
 			}
 		}
 		
-		/* --- TRẠNG THÁI VỊ TRÍ (CORE LOGIC) --- */
-		
-		/* 1. TRẠNG THÁI HOME (Header dưới Nav) */
 		body.mode-home header {
-			transform: translateY(60px); /* Đẩy Header xuống bằng chiều cao Nav */
+			transform: translateY(60px); 
 			border-bottom: none;
 			z-index: 1;
 		}
 		
 		body.mode-home nav {
-			transform: translateY(-80px); /* Kéo Nav lên bằng chiều cao Header */
+			transform: translateY(-80px); 
 			border-bottom: 1px solid #00BBFF;
 		}
 		
-		/* 2. TRẠNG THÁI INTERNAL (Header trên Nav) */
 		body.mode-internal header {
 			transform: translateY(0);
 			z-index: 100;
@@ -137,9 +166,7 @@
 			z-index: 90;
 		}
 		
-		/* 3. TRẠNG THÁI GENERAL (Header thấp hơn Home, thu nhỏ) */
 		body.mode-general header {
-			/* Vị trí Home (60px) + 80px đi xuống = 140px */
 			transform: translateY(140px);
 			border-bottom: none;
 			z-index: 1;
@@ -147,17 +174,14 @@
 		
 		body.mode-general header .logo {
 			transform: scale(0.5);
-			/* Thu nhỏ 50% */
 		}
 		
 		body.mode-general nav {
 			transform: translateY(-80px);
-			/* Vẫn ở vị trí Nav của Home */
 			border-bottom: 1px solid #222;
 		}
 		
 		
-		/* --- HIỆU ỨNG XUYÊN THẤU (BLUR PASS) --- */
 		.phasing-through header,
 		.phasing-through nav {
 			filter: blur(6px);
@@ -165,7 +189,6 @@
 			pointer-events: none;
 		}
 		
-		/* Input Styling */
 		input {
 			background: #111;
 			border: 1px solid #333;
@@ -183,6 +206,81 @@
 			font-weight: bold;
 			cursor: pointer;
 		}
+
+		
+		@media screen and (max-width: 600px) {
+			
+			header {
+				height: 60px;
+			}
+            
+            .interface-wrapper {
+                height: 110px;
+            }
+
+            body.mode-home .interface-wrapper,
+            body.mode-general .interface-wrapper {
+                height: 50px; 
+            }
+			
+			.logo {
+				font-size: 24px;
+				letter-spacing: 2px;
+			}
+
+			nav {
+				height: 50px;
+				gap: 20px; 
+				padding: 0 5px;
+				overflow-x: auto; 
+				justify-content: flex-start; 
+			}
+			
+			nav a {
+				font-size: 12px;
+				padding: 8px 10px; 
+				letter-spacing: 1px;
+				white-space: nowrap; 
+			}
+			
+			.content-area {
+				padding-top: 110px;
+				padding-bottom: 30px;
+				padding-left: 10px;
+				padding-right: 10px;
+			}
+            
+            body.mode-home .content-area,
+            body.mode-general .content-area {
+                padding-top: 50px;
+            }
+			
+			input, button {
+				width: 100%; 
+				box-sizing: border-box; 
+				margin-top: 10px;
+			}
+
+			button {
+				margin-left: 0; 
+			}
+			
+			body.mode-home header {
+				transform: translateY(50px); 
+			}
+			
+			body.mode-home nav {
+				transform: translateY(-60px); 
+			}
+			
+			body.mode-general header {
+				transform: translateY(110px); 
+			}
+			
+			body.mode-general nav {
+				transform: translateY(-60px); 
+			}
+		}
 	</style>
 </head>
 
@@ -194,6 +292,7 @@
 		</header>
 		
 		<nav id="mainNav">
+			<div class="tab-slider"></div> 
 			<a onclick="switchTab('home')" id="btn-home" class="active-link">HOME</a>
 			<a onclick="switchTab('general')" id="btn-general">GENERAL</a>
 			<a onclick="switchTab('about')" id="btn-about">ABOUT</a>
@@ -204,66 +303,79 @@
 	<div class="content-area">
 		<div id="home" class="tab-content active">
 			<h1>SYSTEM STANDBY</h1>
-			<p>Header hiện đang nằm bên dưới ClassList.</p>
+			<p>Hệ thống hiện đang trực tuyến.</p>
 			<p style="color: #666; margin-top: 20px;">[ Waiting for command... ]</p>
 		</div>
 		
 		<div id="general" class="tab-content">
+			<h2 style="color: #FFFFFF"> ---- </h2>
 			<h2 style="color: #FF00FF">GENERAL SCREEN</h2>
-			<p>Header nằm thấp nhất và đã được thu nhỏ 50%.</p>
-			<p>Không có hiệu ứng Blur khi chuyển từ HOME.</p>
+			<p>Đang tải đồ hoạ từ máy chủ...</p>
+			<p>Vui lòng chờ lệnh trong giây lát.</p>
 		</div>
 		
 		<div id="about" class="tab-content">
 			<h2 style="color: #00BBFF">ABOUT SYSTEM</h2>
-			<p>Header đã di chuyển xuyên qua ClassList và hiện nằm phía trên.</p>
-			<p>Giao thức bảo mật cấp 4.</p>
+			<p>Quyền truy cập bị từ chối!</p>
+			<p>Đề nghị xác minh hoặc nhận ủy quyền cao hơn.</p>
 		</div>
 		
 		<div id="id" class="tab-content">
 			<h2>SECURITY CHECK</h2>
-			<p>Nhập mã định danh để truy cập Core.</p>
+			<p>Nhập mã định danh để truy cập >Core<</p>
 			<div style="margin-top: 15px;">
-				<input type="text" id="idInput" placeholder="ENTER ID CODE" onkeydown="if(event.key === 'Enter') checkID()" />
+				<input type="text" id="idInput" placeholder="ENTER YOUR ID" onkeydown="if(event.key === 'Enter') checkID()" />
 				<button onclick="checkID()">VERIFY</button>
 			</div>
 		</div>
 		
 		<script>
-			// Biến lưu trạng thái hiện tại (có thể là 'home', 'internal', hoặc 'general')
 			let currentMode = 'home';
 			
-			function switchTab(tabName) {
-				// 1. Cập nhật giao diện nút bấm (Active state)
-				document.querySelectorAll('nav a').forEach(a => a.classList.remove('active-link'));
-				document.getElementById(`btn-${tabName}`).classList.add('active-link');
+			function updateSliderPosition(activeButtonId) {
+				const slider = document.querySelector('.tab-slider');
+				const activeButton = document.getElementById(activeButtonId);
+				const nav = document.getElementById('mainNav');
+
+				if (!activeButton || !slider || !nav) return;
+
+				const navRect = nav.getBoundingClientRect();
+				const buttonRect = activeButton.getBoundingClientRect();
+
+				slider.style.width = `${buttonRect.width}px`;
 				
-				// 2. Xử lý Logic vị trí Header/Nav và Blur
+				const translateX = buttonRect.left - navRect.left; 
+				
+				slider.style.transform = `translateX(${translateX}px)`;
+			}
+			
+			
+			function switchTab(tabName) {
+				document.querySelectorAll('nav a').forEach(a => a.classList.remove('active-link'));
+				const targetButtonId = `btn-${tabName}`;
+				document.getElementById(targetButtonId).classList.add('active-link');
+				
+				updateSliderPosition(targetButtonId); 
+				
 				const targetMode = (tabName === 'home') ? 'home' : (tabName === 'general' ? 'general' : 'internal');
 				
 				let blurRequired = false;
 				
-				// Sửa logic Blur: Blur phải được kích hoạt khi chuyển đổi giữa Internal và bất kỳ mode nào khác.
 				if (currentMode === 'internal' || targetMode === 'internal') {
-					// Blur khi rời khỏi hoặc đi vào trạng thái Internal (xuyên qua Nav)
 					blurRequired = true;
 				}
 				
-				// Loại trừ trường hợp chuyển từ Home sang General (không xuyên)
 				if (currentMode === 'home' && targetMode === 'general') {
 					blurRequired = false;
 				}
-				// Loại trừ trường hợp chuyển từ General sang Home (không xuyên)
 				if (currentMode === 'general' && targetMode === 'home') {
 					blurRequired = false;
 				}
 				
-				// Chuyển đổi trạng thái (luôn cần chuyển đổi, trừ khi ở cùng một mode)
 				if (currentMode !== targetMode) {
 					triggerPhaseShift(targetMode, blurRequired);
 				}
 				
-				// 3. Chuyển đổi nội dung (Content)
 				document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
 				document.getElementById(tabName).classList.add('active');
 			}
@@ -272,35 +384,30 @@
 				const body = document.body;
 				const logo = document.querySelector('.logo');
 				
-				// A. Kích hoạt hiệu ứng "Mờ do tốc độ" nếu cần
 				if (blurRequired) {
 					body.classList.add('phasing-through');
 				}
 				
-				// B. Thiết lập trạng thái đích (mode CSS class)
 				requestAnimationFrame(() => {
-					// Xóa tất cả các mode cũ
 					body.classList.remove('mode-home', 'mode-internal', 'mode-general');
 					
-					// Gán mode mới
 					if (targetMode === 'home') {
 						body.classList.add('mode-home');
-						logo.style.transform = 'scale(1)'; // Đảm bảo logo full size
+						logo.style.transform = 'scale(1.2)'; 
 					} else if (targetMode === 'general') {
 						body.classList.add('mode-general');
-						logo.style.transform = 'scale(0.5)'; // Thu nhỏ logo
-					} else { // internal (About, ID)
+						logo.style.transform = 'scale(0.5)'; 
+					} else {
 						body.classList.add('mode-internal');
-						logo.style.transform = 'scale(1)'; // Đảm bảo logo full size
+						logo.style.transform = 'scale(1)'; 
 					}
 					currentMode = targetMode;
 				});
 				
-				// C. Tắt hiệu ứng mờ (chỉ chạy nếu blurRequired là true)
 				if (blurRequired) {
 					setTimeout(() => {
 						body.classList.remove('phasing-through');
-					}, 180); // 180ms là một giá trị thử nghiệm tốt, mặc dù transition là 0.6s
+					}, 180); 
 				}
 			}
 			
@@ -312,7 +419,6 @@
 					return;
 				}
 				
-				// Danh sách ID được cấp quyền
 				const routes = {
 					"REVEN-01": "leader.html",
 					"REVEN-02": "officer.html",
@@ -320,7 +426,6 @@
 				};
 				
 				if (routes[id]) {
-					// window.location.href = routes[id]; // Bỏ comment nếu muốn chuyển trang thật
 					alert(`ACCESS GRANTED: ${id}. Chuyển hướng đã bị khóa trong mã.`);
 				} else {
 					alert("ACCESS DENIED: ID không tồn tại.");
@@ -328,6 +433,17 @@
 					document.getElementById("idInput").focus();
 				}
 			}
+
+			document.addEventListener('DOMContentLoaded', (event) => {
+				updateSliderPosition('btn-home'); 
+			});
+
+			window.addEventListener('resize', () => {
+				const activeBtn = document.querySelector('nav a.active-link');
+				if (activeBtn) {
+					updateSliderPosition(activeBtn.id);
+				}
+			});
 		</script>
 		
 </body>
