@@ -6,7 +6,6 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 	<title>Revenantskr - Phase Shift UI</title>
 	<style>
-		/* --- CẤU HÌNH CƠ BẢN --- */
 		body {
 			margin: 0;
 			font-family: Arial, Sans-serif, monospace;
@@ -15,23 +14,19 @@
 			overflow-x: hidden;
 		}
 		
-		/* --- LAYOUT CONTAINER --- */
 		.interface-wrapper {
 			position: relative;
 			width: 100%;
 			background: radial-gradient(circle at center, #111 0%, #000 100%);
-            /* 🔥 SỬA: Thêm chiều cao mặc định và transition */
             height: 140px; 
             transition: height 0.6s cubic-bezier(0.22, 1, 0.36, 1);
 		}
 
-        /* 🔥 MỚI: Thu nhỏ Wrapper còn 60px khi ở Home/General (chiều cao NAV) */
         body.mode-home .interface-wrapper,
         body.mode-general .interface-wrapper {
             height: 60px; 
         }
 		
-		/* --- HEADER (80px) --- */
 		header {
 		    height: 80px;
 		    display: flex;
@@ -56,9 +51,9 @@
 			text-shadow: 0 0 15px rgba(0, 187, 255, 0.6);
 			user-select: none;
 			transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+			transform: scale(1.2);
 		}
 		
-		/* --- NAV (CLASSLIST - 60px) --- */
 		nav {
 			height: 60px;
 			display: flex;
@@ -74,7 +69,6 @@
 				filter 0.6s ease;
 		}
 		
-		/* --- THANH TRƯỢT (SLIDER) EFFECT --- */
 		.tab-slider {
 			position: absolute;
 			height: 100%; 
@@ -83,19 +77,17 @@
 			z-index: 1; 
 			pointer-events: none; 
 			
-			/* MÀU VIỀN và THIẾT LẬP BAN ĐẦU */
 			border-left: 2px solid #00BBFF;
 			border-right: 2px solid #00BBFF;
 			background: transparent; 
 
-			/* Hiệu ứng trượt */
 			transition: width 0.3s cubic-bezier(0.22, 1, 0.36, 1), 
 						transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
 		}
 
 		nav a {
 			position: relative; 
-            z-index: 2; /* Sửa lỗi: Đảm bảo tab hiển thị trên slider */
+            z-index: 2;
 			text-decoration: none;
 			color: #888;
 			font-size: 14px;
@@ -108,31 +100,27 @@
 			border: 1px solid transparent;
 		}
 		
-		/* Thay đổi chỉ áp dụng cho chữ (không áp dụng border) */
 		nav a:hover,
 		nav a.active-link {
 			color: #fff;
 			text-shadow: 0 0 5px rgba(0, 187, 255, 0.5);
-			/* Đảm bảo không có viền và nền từ code cũ */
 			border: none !important;
 			background: transparent !important;
 			box-shadow: none !important;
 		}
 		
-		/* --- CONTENT AREA --- */
 		.content-area {
-            /* 🔥 SỬA: Đặt padding top bằng chiều cao full của Wrapper */
 			padding-top: 140px; 
 			padding-bottom: 60px;
 			padding-left: 20px;
 			padding-right: 20px;
 			text-align: center;
 			min-height: 400px;
-            /* Thêm transition cho padding để đồng bộ */
             transition: padding-top 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+            position: relative; /* Thêm position để kích hoạt z-index */
+            z-index: 5; /* Đặt z-index cao hơn nền (nhưng thấp hơn Nav/Header) */
 		}
 
-        /* 🔥 MỚI: Giảm padding top khi ở HOME/GENERAL (chiều cao NAV 60px) */
         body.mode-home .content-area,
         body.mode-general .content-area {
             padding-top: 60px;
@@ -156,25 +144,18 @@
 			}
 		}
 		
-		/* --- TRẠNG THÁI VỊ TRÍ (CORE LOGIC) --- */
-		
-		/* 1. TRẠNG THÁI HOME (Header dưới Nav) */
 		body.mode-home header {
-            /* Header (80px) dịch chuyển xuống 60px để nằm dưới Nav (60px) */
 			transform: translateY(60px); 
 			border-bottom: none;
 			z-index: 1;
 		}
 		
 		body.mode-home nav {
-            /* Nav (60px) dịch chuyển lên 80px để nằm ở vị trí 0 */
 			transform: translateY(-80px); 
 			border-bottom: 1px solid #00BBFF;
 		}
 		
-		/* 2. TRẠNG THÁI INTERNAL (Header trên Nav) */
 		body.mode-internal header {
-            /* Cả hai nằm ở vị trí mặc định 0 */
 			transform: translateY(0);
 			z-index: 100;
 			box-shadow: 0 5px 20px rgba(0, 0, 0, 0.8);
@@ -185,9 +166,7 @@
 			z-index: 90;
 		}
 		
-		/* 3. TRẠNG THÁI GENERAL (Header thấp hơn Home, thu nhỏ) */
 		body.mode-general header {
-            /* Header (80px) dịch chuyển xuống 140px (xuống dưới cùng) */
 			transform: translateY(140px);
 			border-bottom: none;
 			z-index: 1;
@@ -198,13 +177,11 @@
 		}
 		
 		body.mode-general nav {
-            /* Nav (60px) dịch chuyển lên 80px để nằm ở vị trí 0 */
 			transform: translateY(-80px);
 			border-bottom: 1px solid #222;
 		}
 		
 		
-		/* --- HIỆU ỨNG XUYÊN THẤU (BLUR PASS) --- */
 		.phasing-through header,
 		.phasing-through nav {
 			filter: blur(6px);
@@ -212,7 +189,6 @@
 			pointer-events: none;
 		}
 		
-		/* Input Styling */
 		input {
 			background: #111;
 			border: 1px solid #333;
@@ -232,23 +208,16 @@
 		}
 
 		
-		/* ------------------------------------------------------------------- */
-		/* ------------------------------------------------------------------- */
-		/* 📱 TỐI ƯU CHO ĐIỆN THOẠI (Mobile Override) */
-		/* Ứng dụng khi chiều rộng màn hình <= 600px */
 		@media screen and (max-width: 600px) {
 			
-			/* Điều chỉnh Font và Header */
 			header {
 				height: 60px;
 			}
             
-            /* 🔥 MOBILE MỚI: Chiều cao mặc định là 110px (60px Header + 50px Nav) */
             .interface-wrapper {
                 height: 110px;
             }
 
-            /* 🔥 MOBILE MỚI: Thu nhỏ Wrapper còn 50px khi ở Home/General (chiều cao NAV) */
             body.mode-home .interface-wrapper,
             body.mode-general .interface-wrapper {
                 height: 50px; 
@@ -259,10 +228,9 @@
 				letter-spacing: 2px;
 			}
 
-			/* Điều chỉnh NAV (ClassList) */
 			nav {
 				height: 50px;
-				gap: 20px; /* ĐÃ CHỈNH: Mobile gap từ 10px lên 20px */
+				gap: 20px; 
 				padding: 0 5px;
 				overflow-x: auto; 
 				justify-content: flex-start; 
@@ -275,22 +243,18 @@
 				white-space: nowrap; 
 			}
 			
-			/* Điều chỉnh Nội dung */
 			.content-area {
-                /* MOBILE: Padding top mặc định là 110px */
 				padding-top: 110px;
 				padding-bottom: 30px;
 				padding-left: 10px;
 				padding-right: 10px;
 			}
             
-            /* MOBILE: Giảm padding top khi ở HOME/GENERAL (chiều cao NAV 50px) */
             body.mode-home .content-area,
             body.mode-general .content-area {
                 padding-top: 50px;
             }
 			
-			/* Tối ưu Input/Button */
 			input, button {
 				width: 100%; 
 				box-sizing: border-box; 
@@ -301,10 +265,6 @@
 				margin-left: 0; 
 			}
 			
-			/* --- XỬ LÝ LẠI VỊ TRÍ CHO TỪNG MODE (Quan trọng!) --- */
-			/* Dựa trên Header 60px và Nav 50px */
-
-			/* 1. TRẠNG THÁI HOME (Header dưới Nav) */
 			body.mode-home header {
 				transform: translateY(50px); 
 			}
@@ -313,7 +273,6 @@
 				transform: translateY(-60px); 
 			}
 			
-			/* 3. TRẠNG THÁI GENERAL (Header thấp hơn Home, thu nhỏ) */
 			body.mode-general header {
 				transform: translateY(110px); 
 			}
@@ -322,6 +281,93 @@
 				transform: translateY(-60px); 
 			}
 		}
+		
+		/* ====== DUAL FRAME LAYOUT ====== */
+		.dual-frame {
+		    width: 100%;
+		    display: flex;
+		    justify-content: space-between;
+		    gap: 10%; /* 10% khoảng cách giữa 2 frame */
+		    margin-top: 40px;
+		}
+		
+		.frame-box {
+		    width: 40%;   /* mỗi frame 40% */
+		    height: 300px;
+		    border: 1px solid #00BBFF;
+		    background: #000;
+		}
+		
+		/* ====== MÀN HÌNH DỌC: 2 FRAME XẾP TRÊN – DƯỚI ====== */
+		@media (orientation: portrait) {
+		    .dual-frame {
+		        flex-direction: column;
+		        gap: 10%; /* vẫn giữ 10% cách nhau theo chiều dọc */
+		        align-items: center;
+		    }
+		
+		    .frame-box {
+		        width: 90%; /* tổng 40 + 40 + 10 = 90, nên set 90% cho hợp lý */
+		        height: 220px;
+		    }
+		}
+		/* FRAME SYSTEM */
+		.frame-wrapper {
+		    display: flex;
+		    width: 100%;
+		    height: auto;
+		    margin: 0;
+		    padding: 0;
+		    justify-content: center;
+		    align-items: center;
+		    gap: 10%;
+		}
+		
+		.frame-box {
+		    width: 40%;
+		    height: 300px;
+		    background: #0a0a0a;
+		    border: 1px solid #00bbff55;
+		    backdrop-filter: blur(6px);
+		    box-shadow: 0 0 20px #00bbff22;
+		    animation-duration: 0.8s;
+		    animation-fill-mode: both;
+		    border-radius: 10px;
+		}
+		
+		/* Hiệu ứng trượt từ trái */
+		.slide-left {
+		    animation-name: slideFromLeft;
+		}
+		
+		/* Hiệu ứng trượt từ phải */
+		.slide-right {
+		    animation-name: slideFromRight;
+		}
+		
+		@keyframes slideFromLeft {
+		    from { transform: translateX(-80px); opacity: 0; }
+		    to   { transform: translateX(0); opacity: 1; }
+		}
+		
+		@keyframes slideFromRight {
+		    from { transform: translateX(80px); opacity: 0; }
+		    to   { transform: translateX(0); opacity: 1; }
+		}
+		
+		/* Nếu màn hình dọc → 2 frame xếp dọc */
+		@media (orientation: portrait) {
+		    .frame-wrapper {
+		        flex-direction: column;
+		        gap: 10%;
+		    }
+		    .frame-box {
+		        width: 80%;
+		        height: 250px;
+		    }
+		}
+		
+		
 	</style>
 </head>
 
@@ -343,39 +389,37 @@
 	
 	<div class="content-area">
 		<div id="home" class="tab-content active">
-			<h1>SYSTEM STANDBY</h1>
-			<p>Header hiện đang nằm bên dưới ClassList.</p>
-			<p style="color: #666; margin-top: 20px;">[ Waiting for command... ]</p>
+			<div class="dual-frame">
+				<iframe src="frame1home.html" class="frame-box slide-left"></iframe>
+				<iframe src="frame2home.html" class="frame-box slide-right"></iframe>
+			</div>
 		</div>
 		
 		<div id="general" class="tab-content">
+			<h2 style="color: #FFFFFF"> ---- </h2>
 			<h2 style="color: #FF00FF">GENERAL SCREEN</h2>
-			<p>Header nằm thấp nhất và đã được thu nhỏ 50%.</p>
-			<p>Không có hiệu ứng Blur khi chuyển từ HOME.</p>
+			<p>Đang tải đồ hoạ từ máy chủ...</p>
+			<p>Vui lòng chờ lệnh trong giây lát.</p>
 		</div>
 		
 		<div id="about" class="tab-content">
 			<h2 style="color: #00BBFF">ABOUT SYSTEM</h2>
-			<p>Header đã di chuyển xuyên qua ClassList và hiện nằm phía trên.</p>
-			<p>Giao thức bảo mật cấp 4.</p>
+			<p>Quyền truy cập bị từ chối!</p>
+			<p>Đề nghị xác minh hoặc nhận ủy quyền cao hơn.</p>
 		</div>
 		
 		<div id="id" class="tab-content">
 			<h2>SECURITY CHECK</h2>
-			<p>Nhập mã định danh để truy cập Core.</p>
+			<p>Nhập mã định danh để truy cập >Core<</p>
 			<div style="margin-top: 15px;">
-				<input type="text" id="idInput" placeholder="ENTER ID CODE" onkeydown="if(event.key === 'Enter') checkID()" />
+				<input type="text" id="idInput" placeholder="ENTER YOUR ID" onkeydown="if(event.key === 'Enter') checkID()" />
 				<button onclick="checkID()">VERIFY</button>
 			</div>
 		</div>
 		
 		<script>
-			// Biến lưu trạng thái hiện tại (có thể là 'home', 'internal', hoặc 'general')
 			let currentMode = 'home';
 			
-			// ---------------------------------------------
-			// Hàm mới: Cập nhật vị trí thanh trượt
-			// ---------------------------------------------
 			function updateSliderPosition(activeButtonId) {
 				const slider = document.querySelector('.tab-slider');
 				const activeButton = document.getElementById(activeButtonId);
@@ -383,15 +427,11 @@
 
 				if (!activeButton || !slider || !nav) return;
 
-				// 1. Tính toán vị trí và kích thước
 				const navRect = nav.getBoundingClientRect();
 				const buttonRect = activeButton.getBoundingClientRect();
 
-				// 2. Thiết lập kích thước và vị trí (dùng transform X để trượt)
 				slider.style.width = `${buttonRect.width}px`;
 				
-				// Tính toán khoảng cách dịch chuyển: 
-				// Vị trí nút (trái) trừ đi vị trí Nav (trái)
 				const translateX = buttonRect.left - navRect.left; 
 				
 				slider.style.transform = `translateX(${translateX}px)`;
@@ -399,77 +439,63 @@
 			
 			
 			function switchTab(tabName) {
-				// 1. Cập nhật giao diện nút bấm (Active state)
 				document.querySelectorAll('nav a').forEach(a => a.classList.remove('active-link'));
 				const targetButtonId = `btn-${tabName}`;
 				document.getElementById(targetButtonId).classList.add('active-link');
 				
-				// Kêu gọi hàm trượt sau khi active-link được gán
 				updateSliderPosition(targetButtonId); 
 				
-				// 2. Xử lý Logic vị trí Header/Nav và Blur
 				const targetMode = (tabName === 'home') ? 'home' : (tabName === 'general' ? 'general' : 'internal');
 				
 				let blurRequired = false;
 				
-				// Sửa logic Blur: Blur phải được kích hoạt khi chuyển đổi giữa Internal và bất kỳ mode nào khác.
 				if (currentMode === 'internal' || targetMode === 'internal') {
-					// Blur khi rời khỏi hoặc đi vào trạng thái Internal (xuyên qua Nav)
 					blurRequired = true;
 				}
 				
-				// Loại trừ trường hợp chuyển từ Home sang General (không xuyên)
 				if (currentMode === 'home' && targetMode === 'general') {
 					blurRequired = false;
 				}
-				// Loại trừ trường hợp chuyển từ General sang Home (không xuyên)
 				if (currentMode === 'general' && targetMode === 'home') {
 					blurRequired = false;
 				}
 				
-				// Chuyển đổi trạng thái (luôn cần chuyển đổi, trừ khi ở cùng một mode)
 				if (currentMode !== targetMode) {
 					triggerPhaseShift(targetMode, blurRequired);
 				}
 				
-				// 3. Chuyển đổi nội dung (Content)
 				document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
 				document.getElementById(tabName).classList.add('active');
-			}
+				}
 			
 			function triggerPhaseShift(targetMode, blurRequired) {
 				const body = document.body;
 				const logo = document.querySelector('.logo');
 				
-				// A. Kích hoạt hiệu ứng "Mờ do tốc độ" nếu cần
 				if (blurRequired) {
 					body.classList.add('phasing-through');
 				}
 				
-				// B. Thiết lập trạng thái đích (mode CSS class)
 				requestAnimationFrame(() => {
-					// Xóa tất cả các mode cũ
 					body.classList.remove('mode-home', 'mode-internal', 'mode-general');
 					
-					// Gán mode mới
 					if (targetMode === 'home') {
 						body.classList.add('mode-home');
-						logo.style.transform = 'scale(1)'; // Đảm bảo logo full size
+						logo.style.transform = 'scale(1.2)'; 
 					} else if (targetMode === 'general') {
 						body.classList.add('mode-general');
-						logo.style.transform = 'scale(0.5)'; // Thu nhỏ logo
-					} else { // internal (About, ID)
+						logo.style.transform = 'scale(0.5)'; 
+					} else {
 						body.classList.add('mode-internal');
-						logo.style.transform = 'scale(1)'; // Đảm bảo logo full size
+						logo.style.transform = 'scale(1)'; 
 					}
 					currentMode = targetMode;
 				});
 				
-				// C. Tắt hiệu ứng mờ (chỉ chạy nếu blurRequired là true)
 				if (blurRequired) {
 					setTimeout(() => {
 						body.classList.remove('phasing-through');
-					}, 180); // 180ms là một giá trị thử nghiệm tốt, mặc dù transition là 0.6s
+					}, 180); 
 				}
 			}
 			
@@ -481,7 +507,6 @@
 					return;
 				}
 				
-				// Danh sách ID được cấp quyền
 				const routes = {
 					"REVEN-01": "leader.html",
 					"REVEN-02": "officer.html",
@@ -489,7 +514,6 @@
 				};
 				
 				if (routes[id]) {
-					// window.location.href = routes[id]; // Bỏ comment nếu muốn chuyển trang thật
 					alert(`ACCESS GRANTED: ${id}. Chuyển hướng đã bị khóa trong mã.`);
 				} else {
 					alert("ACCESS DENIED: ID không tồn tại.");
@@ -498,22 +522,35 @@
 				}
 			}
 
-			// ---------------------------------------------
-			// KHỞI TẠO VÀ XỬ LÝ KHI THAY ĐỔI KÍCH THƯỚC MÀN HÌNH
-			// ---------------------------------------------
 			document.addEventListener('DOMContentLoaded', (event) => {
-				// 1. Gọi hàm trượt cho tab HOME mặc định khi tải trang
 				updateSliderPosition('btn-home'); 
 			});
 
-			// 2. Cập nhật vị trí thanh trượt khi kích thước màn hình thay đổi (Responsive)
 			window.addEventListener('resize', () => {
-				// Lấy ID của nút đang active
 				const activeBtn = document.querySelector('nav a.active-link');
 				if (activeBtn) {
 					updateSliderPosition(activeBtn.id);
 				}
 			});
+			
+			
+			function applyFrameSlideEffect() {
+			    const frames = document.querySelectorAll('#home .frame-box');
+			
+			    if (frames.length === 2) {
+			        frames[0].classList.remove("slide-left", "slide-right");
+			        frames[1].classList.remove("slide-left", "slide-right");
+			
+			        // Ép kích hoạt lại animation
+			        void frames[0].offsetWidth;
+			        void frames[1].offsetWidth;
+			
+			        frames[0].classList.add("slide-left");
+			        frames[1].classList.add("slide-right");
+			    }
+			}			
+			
+			
 		</script>
 		
 </body>

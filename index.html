@@ -281,6 +281,93 @@
 				transform: translateY(-60px); 
 			}
 		}
+		
+		/* ====== DUAL FRAME LAYOUT ====== */
+		.dual-frame {
+		    width: 100%;
+		    display: flex;
+		    justify-content: space-between;
+		    gap: 10%; /* 10% khoảng cách giữa 2 frame */
+		    margin-top: 40px;
+		}
+		
+		.frame-box {
+		    width: 40%;   /* mỗi frame 40% */
+		    height: 300px;
+		    border: 1px solid #00BBFF;
+		    background: #000;
+		}
+		
+		/* ====== MÀN HÌNH DỌC: 2 FRAME XẾP TRÊN – DƯỚI ====== */
+		@media (orientation: portrait) {
+		    .dual-frame {
+		        flex-direction: column;
+		        gap: 10%; /* vẫn giữ 10% cách nhau theo chiều dọc */
+		        align-items: center;
+		    }
+		
+		    .frame-box {
+		        width: 90%; /* tổng 40 + 40 + 10 = 90, nên set 90% cho hợp lý */
+		        height: 220px;
+		    }
+		}
+		/* FRAME SYSTEM */
+		.frame-wrapper {
+		    display: flex;
+		    width: 100%;
+		    height: auto;
+		    margin: 0;
+		    padding: 0;
+		    justify-content: center;
+		    align-items: center;
+		    gap: 10%;
+		}
+		
+		.frame-box {
+		    width: 40%;
+		    height: 300px;
+		    background: #0a0a0a;
+		    border: 1px solid #00bbff55;
+		    backdrop-filter: blur(6px);
+		    box-shadow: 0 0 20px #00bbff22;
+		    animation-duration: 0.8s;
+		    animation-fill-mode: both;
+		    border-radius: 10px;
+		}
+		
+		/* Hiệu ứng trượt từ trái */
+		.slide-left {
+		    animation-name: slideFromLeft;
+		}
+		
+		/* Hiệu ứng trượt từ phải */
+		.slide-right {
+		    animation-name: slideFromRight;
+		}
+		
+		@keyframes slideFromLeft {
+		    from { transform: translateX(-80px); opacity: 0; }
+		    to   { transform: translateX(0); opacity: 1; }
+		}
+		
+		@keyframes slideFromRight {
+		    from { transform: translateX(80px); opacity: 0; }
+		    to   { transform: translateX(0); opacity: 1; }
+		}
+		
+		/* Nếu màn hình dọc → 2 frame xếp dọc */
+		@media (orientation: portrait) {
+		    .frame-wrapper {
+		        flex-direction: column;
+		        gap: 10%;
+		    }
+		    .frame-box {
+		        width: 80%;
+		        height: 250px;
+		    }
+		}
+		
+		
 	</style>
 </head>
 
@@ -302,9 +389,10 @@
 	
 	<div class="content-area">
 		<div id="home" class="tab-content active">
-			<h1>SYSTEM STANDBY</h1>
-			<p>Hệ thống hiện đang trực tuyến.</p>
-			<p style="color: #666; margin-top: 20px;">[ Waiting for command... ]</p>
+			<div class="dual-frame">
+				<iframe src="frame1home.html" class="frame-box slide-left"></iframe>
+				<iframe src="frame2home.html" class="frame-box slide-right"></iframe>
+			</div>
 		</div>
 		
 		<div id="general" class="tab-content">
@@ -378,7 +466,7 @@
 				
 				document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
 				document.getElementById(tabName).classList.add('active');
-			}
+				}
 			
 			function triggerPhaseShift(targetMode, blurRequired) {
 				const body = document.body;
@@ -444,6 +532,25 @@
 					updateSliderPosition(activeBtn.id);
 				}
 			});
+			
+			
+			function applyFrameSlideEffect() {
+			    const frames = document.querySelectorAll('#home .frame-box');
+			
+			    if (frames.length === 2) {
+			        frames[0].classList.remove("slide-left", "slide-right");
+			        frames[1].classList.remove("slide-left", "slide-right");
+			
+			        // Ép kích hoạt lại animation
+			        void frames[0].offsetWidth;
+			        void frames[1].offsetWidth;
+			
+			        frames[0].classList.add("slide-left");
+			        frames[1].classList.add("slide-right");
+			    }
+			}			
+			
+			
 		</script>
 		
 </body>
