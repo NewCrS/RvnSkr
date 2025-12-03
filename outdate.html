@@ -287,7 +287,7 @@
 		    width: 100%;
 		    display: flex;
 		    justify-content: space-between;
-		    gap: 10%; /* 10% khoảng cách giữa 2 frame */
+		    gap: 5%; /* 10% khoảng cách giữa 2 frame */
 		    margin-top: 40px;
 		}
 		
@@ -324,7 +324,7 @@
 		}
 		
 		.frame-box {
-		    width: 40%;
+		    width:40%;
 		    height: 300px;
 		    background: #0a0a0a;
 		    border: 1px solid #00bbff55;
@@ -400,7 +400,7 @@
 			<h2 style="color: #FF00FF">GENERAL SCREEN</h2>
 			<p>Đang tải đồ hoạ từ máy chủ...</p>
 			<p>Vui lòng chờ lệnh trong giây lát.</p>
-		</div>
+		</div> 
 		
 		<div id="about" class="tab-content">
 			<h2 style="color: #00BBFF">ABOUT SYSTEM</h2>
@@ -499,28 +499,43 @@
 				}
 			}
 			
+			// --- BẮT ĐẦU: MÃ CHECKID ĐƯỢC SỬA ĐỔI ---
 			function checkID() {
-				const id = document.getElementById("idInput").value.trim().toUpperCase();
-				
-				if (!id) {	
-					alert("CẢNH BÁO: Chưa nhập ID.");
-					return;
-				}
-				
-				const routes = {
-					"REVEN-01": "leader.html",
-					"REVEN-02": "officer.html",
-					"REVEN-03": "member.html",
-				};
-				
-				if (routes[id]) {
-					alert(`ACCESS GRANTED: ${id}. Chuyển hướng đã bị khóa trong mã.`);
-				} else {
-					alert("ACCESS DENIED: ID không tồn tại.");
-					document.getElementById("idInput").value = "";
-					document.getElementById("idInput").focus();
-				}
+			    const id = document.getElementById("idInput").value.trim().toUpperCase();
+			    
+			    if (!id) {	
+			        alert("CẢNH BÁO: Chưa nhập ID.");
+			        return;
+			    }
+			    
+			    // Định nghĩa các loại Popup và Trang đích dựa trên ID
+			    const routeConfig = {
+			        "REVEN-01": { target: "leader.html", popupType: "POPUP_ADMIN" }, 
+			        "REVEN-02": { target: "officer.html", popupType: "POPUP_MANAGER" }, 
+			        "REVEN-03": { target: "member.html", popupType: "POPUP_MEMBER" }, 
+			        "1234": { target: "dev.html", popupType: "POPUP_DEVELOPER" } // ID bí mật của bạn
+			    };
+			
+			    const config = routeConfig[id];
+			
+			    if (config) {
+			        // 1. LƯU TRỰC TIẾP LOẠI POPUP VÀO SESSION STORAGE
+			        sessionStorage.setItem('tempPopupType', config.popupType);
+			        
+			        // 2. Chuyển hướng đến /forward.html, mang theo ID và Trang đích cuối cùng
+			        const forwardURL = `forward.html?id=${encodeURIComponent(id)}&target=${encodeURIComponent(config.target)}`;
+			        
+			        alert(`ACCESS GRANTED: ${id}. Đang chuyển hướng qua trang trung gian.`);
+			        window.location.href = forwardURL;
+			        
+			    } else {
+			        alert("ACCESS DENIED: ID không tồn tại.");
+			        document.getElementById("idInput").value = "";
+			        document.getElementById("idInput").focus();
+			    }
 			}
+			// --- KẾT THÚC: MÃ CHECKID ĐƯỢC SỬA ĐỔI ---
+
 
 			document.addEventListener('DOMContentLoaded', (event) => {
 				updateSliderPosition('btn-home'); 
@@ -549,6 +564,66 @@
 			        frames[1].classList.add("slide-right");
 			    }
 			}			
+			
+			
+		// --- BẮT ĐẦU: MÃ XỬ LÝ POPUP BÍ MẬT ---
+		
+		window.onload = function() {
+		    // 1. Kiểm tra sessionStorage để xác nhận chuyển hướng hợp lệ
+		    const isForwarded = sessionStorage.getItem('isForwarded');
+		    const requestedPopup = sessionStorage.getItem('secretPopupKey');
+		    
+		    // Lấy thông tin công khai (Trang đích)
+		    const params = new URLSearchParams(window.location.search);
+		    const finalTarget = params.get('finalTarget');
+		
+		    if (isForwarded === 'true' && requestedPopup) {
+		        
+		        // 2. Định nghĩa nội dung cho từng loại Popup
+		        let secretMessage = "";
+		        
+		        switch (requestedPopup) {
+		            case "POPUP_ADMIN":
+		                secretMessage = "🚀 QUẢN TRỊ VIÊN ĐẶC BIỆT: Bạn có quyền truy cập tối cao!";
+		                break;
+		            case "POPUP_MANAGER":
+		                secretMessage = "💼 QUẢN LÝ: Bảng điều khiển tài nguyên nội bộ đã mở.";
+		                break;
+		            case "POPUP_MEMBER":
+		                secretMessage = "👥 THÀNH VIÊN: Đã kích hoạt tính năng cộng đồng ẩn.";
+		                break;
+		            case "POPUP_DEVELOPER":
+		                secretMessage = "💻 DEV MODE: Console đã được mở khóa. Target: " + decodeURIComponent(finalTarget || 'N/A');
+		                break;
+		            default:
+		                secretMessage = "⚠️ LỖI CẤU HÌNH: Đã chuyển hướng hợp lệ nhưng loại popup không xác định.";
+		        }
+		
+		        // ✅ HIỂN THỊ POPUP BÍ MẬT
+		        alert(secretMessage);
+		
+		        // 3. (Quan trọng) XÓA TẤT CẢ CÁC KHÓA BÍ MẬT KHỎI SESSION STORAGE
+		        sessionStorage.removeItem('isForwarded');
+		        sessionStorage.removeItem('secretPopupKey');
+		        
+		        // 4. Xóa tham số URL công khai (finalTarget) để link sạch hoàn toàn
+		        // (Link sẽ là home.com/ sau khi xử lý)
+		        const newURL = window.location.pathname; 
+		        history.replaceState(null, '', newURL); 
+		
+		    } 
+		    // Các phần còn lại của window.onload (ví dụ: updateSliderPosition) sẽ chạy tiếp sau đây.
+		    
+		    // Gọi lại hàm updateSliderPosition (nếu cần) để đảm bảo giao diện hiển thị đúng
+		    const activeBtn = document.querySelector('nav a.active-link');
+		    if (activeBtn) {
+		        updateSliderPosition(activeBtn.id);
+		    }
+		};
+		
+		// --- KẾT THÚC: MÃ XỬ LÝ POPUP BÍ MẬT ---
+
+			
 			
 			
 		</script>
