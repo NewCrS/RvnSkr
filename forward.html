@@ -44,8 +44,8 @@
             
         } else {
             // Trường hợp lỗi hoặc truy cập trực tiếp
-            console.error("Lỗi chuyển tiếp. Thiếu thông tin hoặc không hợp lệ.");
-            window.location.replace("/");
+            const finalURL = `./?finalTarget=${encodeURIComponent(target)}`;
+            window.location.replace(finalURL);
         }
     </script>
 </body>
