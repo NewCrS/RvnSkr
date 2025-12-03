@@ -37,7 +37,7 @@
             // 3. Tạo URL chuyển hướng ngược lại trang gốc
             // Chúng ta chỉ truyền finalTarget qua URL.
             // Nếu bạn muốn URL sạch 100% không có bất kỳ tham số nào, hãy dùng: const finalURL = `/`;
-            const finalURL = `?finalTarget=${encodeURIComponent(target)}`;
+            const finalURL = `?finalTarget=${encodeURIComponent(target)}`; 
             
             // Thực hiện chuyển hướng ngược lại trang gốc
             window.location.replace(finalURL);
