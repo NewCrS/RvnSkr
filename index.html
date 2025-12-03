@@ -437,13 +437,195 @@
         .close-btn:hover {
             background: #0088CC;
         }
+        
+				/* CSS MỚI: Modal khởi động */
+				.startup-overlay {
+				    position: fixed;
+				    top: 0;
+				    left: 0;
+				    width: 100%;
+				    height: 100%;
+				    background: #000; /* Nền đen */
+				    color: #00BBFF;
+				    z-index: 10000; /* Đảm bảo nằm trên cùng */
+				    display: flex;
+				    flex-direction: column;
+				    justify-content: center;
+				    align-items: center;
+				    text-align: center;
+				    opacity: 1;
+				    transition: opacity 0.5s ease, visibility 0.5s ease;
+				}
+				
+				.startup-overlay.hidden {
+				    opacity: 0;
+				    visibility: hidden;
+				    pointer-events: none;
+				}
+				
+				.startup-overlay h1 {
+				    font-size: 2em;
+				    margin-bottom: 20px;
+				    text-shadow: 0 0 10px rgba(0, 187, 255, 0.7);
+				}
+				
+				.startup-overlay button {
+				    /* Tái sử dụng style nút cũ của bạn */
+				    background: #00BBFF;
+				    color: #000;
+				    border: none;
+				    padding: 12px 25px;
+				    font-weight: bold;
+				    cursor: pointer;
+				    font-size: 1.1em;
+				    box-shadow: 0 0 15px rgba(0, 187, 255, 0.5);
+				    transition: background 0.2s;
+				}
+
+
+			/* --- HIỆU ỨNG HẠT BỤI MỜ (DUST PARTICLE EFFECT) - PHIÊN BẢN JS --- */
+			.dust-overlay {
+			    position: fixed;
+			    top: 0;
+			    left: 0;
+			    width: 100%;
+			    height: 100%;
+			    z-index: 800000; 
+			    pointer-events: none; 
+			    overflow: hidden; 
+			}
+			
+/* --- LỚP PHỦ BỤI NỀN (BACKGROUND DUST) --- */
+			.dust-overlay-background {
+			    position: fixed;
+			    top: 0;
+			    left: 0;
+			    width: 100%;
+			    height: 100%;
+			    /* Z-index thấp nhất, nằm dưới Header (z-index: 2) và Nav (z-index: 10) */
+			    z-index: 1; 
+			    pointer-events: none; 
+			    overflow: hidden; 
+			}
+
+			
+			
+			/* Lớp CSS cho từng hạt bụi (sẽ được tạo bằng JS) */
+			.dust-particle {
+			    position: absolute;
+			    width: 8px; /* Kích thước hạt */
+			    height: 8px;
+			    background: #fff; /* Màu trắng mờ */
+			    border-radius: 50%;
+			    opacity: 0; /* Mặc định ẩn, sẽ hiện khi JS chèn vào */
+			    filter: blur(4px); /* Làm mờ nhẹ */
+			    animation: floating-dust 180s linear infinite;
+			    
+			}
+			
+			@keyframes floating-dust {
+			    0% {
+			        /* Trạng thái bắt đầu: Bay nhẹ nhàng, thay đổi vị trí nhẹ */
+			        transform: translate3d(0, 0, 0) rotate(0deg);
+			        opacity: 0.2;
+			    }
+			    
+			    25% {
+			        /* Lớp bụi trôi lên và sang trái */
+			        transform: translate3d(-40px, -20px, 0) rotate(5deg);
+			        opacity: 0.4;
+			    }
+			    
+			    50% {
+			        /* Lớp bụi trôi xuống và sang phải */
+			        transform: translate3d(40px, 20px, 0) rotate(-5deg);
+			        opacity: 0.1;
+			    }
+			    
+			    75% {
+			        /* Lớp bụi trôi lên và sang phải nhẹ */
+			        transform: translate3d(20px, -80px, 0) rotate(8deg);
+			        opacity: 0.3;
+			    }
+			    
+			    100% {
+			        /* Quay về vị trí ban đầu (0%) */
+			        transform: translate3d(0, 0, 0) rotate(0deg);
+			        opacity: 0.2;
+			    }
+			}
+
+
+			/* --- Lớp Hạt Bụi Nằm Ở Phía Trước/Trên (Foreground Layer) --- */
+/* --- Lớp Hạt Bụi Nằm Ở Phía Trước/Trên (Foreground Layer) --- */
+			.dust-particle-foreground {
+			    position: absolute;
+			    width: 6.4px; 
+			    height: 6.4px;
+			    background: #fff; 
+			    border-radius: 50%;
+			    opacity: 0; 
+			    filter: blur(2px); 
+			    animation: floating-dust-fast 80s linear infinite; 
+			    
+			}
+
+			
+			/* Keyframes mới cho lớp trước: Biến đổi nhanh hơn Zero-G */
+			@keyframes floating-dust-fast {
+			    0% {
+			        transform: translate3d(0, 0, 0) rotate(0deg);
+			        opacity: 0.1;
+			    }
+			    
+			    25% {
+			        transform: translate3d(-18px, -8px, 0) rotate(8deg);
+			        opacity: 0.25;
+			    }
+			    
+			    50% {
+			        transform: translate3d(20px, 8px, 0) rotate(-10deg);
+			        opacity: 0.05;
+			    }
+			    
+			    75% {
+			        transform: translate3d(8px, -40px, 0) rotate(4deg);
+			        opacity: 0.2;
+			    }
+			    
+			    100% {
+			        transform: translate3d(0, 0, 0) rotate(0deg);
+			        opacity: 0.1;
+			    }
+			}
+
+
+
+
+
+
+
+
+        
+        
 	</style>
 </head>
 
 <body class="mode-home">
-	
-	<div class="interface-wrapper">
-		<header id="mainHeader">
+  <audio id="background-music" src="assets/theme.mp3" loop></audio>
+
+
+  <div class="startup-overlay" id="startupOverlay">
+      <h1>REVENANTSKR INTERFACE</h1>
+      <p>Lần đầu đến Revenantskr nhỉ? bạn vẫn chưa có mặt trong cơ sở dữ liệu đâu.</p>.</p>
+      <button id="startButton">ẤN ĐỂ BẮT ĐẦU!</button>
+  </div>
+    
+  <div class="dust-overlay-background"></div> 
+
+  <div class="interface-wrapper"> 
+
+ 		<header id="mainHeader">
 			<div class="logo">REVENANTSKR</div>
 		</header>
 		
@@ -591,6 +773,7 @@
 			
 			function closeSecretModal() {
 			    document.getElementById('secretModal').classList.remove('active');
+			    startBackgroundMusic();
 			}
 			// --- KẾT THÚC HÀM XỬ LÝ MODAL ---
 
@@ -662,46 +845,50 @@
 			}			
 			
 			
-			// --- BẮT ĐẦU: MÃ XỬ LÝ POPUP BÍ MẬT (ĐÃ CHUYỂN SANG MODAL) ---
+			// --- BẮT ĐẦU: MÃ XỬ LÝ POPUP BÍ MẬT VÀ KHỞI ĐỘNG HỆ THỐNG ĐÃ SỬA LỖI CUỐI CÙNG ---
 			
 			window.onload = function() {
-			    // 1. Kiểm tra sessionStorage để xác nhận chuyển hướng hợp lệ
+			    // 1. Lấy tham chiếu đến Modal Khởi động và Nút
+			    const startupOverlay = document.getElementById('startupOverlay');
+			    const startButton = document.getElementById('startButton');
+			
+			    // 2. Kiểm tra sessionStorage cho chuyển hướng bí mật
 			    const isForwarded = sessionStorage.getItem('isForwarded');
 			    const requestedPopup = sessionStorage.getItem('secretPopupKey');
-			    
-			    // Lấy thông tin công khai (Trang đích)
 			    const params = new URLSearchParams(window.location.search);
 			    const finalTarget = params.get('finalTarget');
 			
 			    if (isForwarded === 'true' && requestedPopup) {
 			        
-			        // 2. Định nghĩa nội dung, tiêu đề và ảnh cho từng loại Popup
+			        // A. Nếu có chuyển hướng bí mật, TẮT OVERLAY KHỞI ĐỘNG ngay lập tức
+			        if (startupOverlay) {
+			             startupOverlay.classList.add('hidden');
+			        }
+			        
+			        // B. Logic Định nghĩa và Hiển thị Modal Bí mật (Giữ nguyên)
 			        let modalTitle = "";
 			        let modalMessage = "";
-			        let modalImageURL = ""; // Biến chứa URL ảnh
+			        let modalImageURL = ""; 
 			        
 			        switch (requestedPopup) {
 			            case "POPUP_ADMIN":
 			                modalTitle = "ADMIN CORE ACCESS";
 			                modalMessage = "🚀 **QUẢN TRỊ VIÊN ĐẶC BIỆT:** Bạn có quyền truy cập tối cao!";
-			                // *** THAY URL ẢNH BÍ MẬT CỦA BẠN VÀO ĐÂY ***
 			                modalImageURL = "images.jpg"; 
 			                break;
 			            case "POPUP_MANAGER":
 			                modalTitle = "MANAGER PANEL UNLOCKED";
 			                modalMessage = "💼 **QUẢN LÝ:** Bảng điều khiển tài nguyên nội bộ đã mở.";
-			                // *** THAY URL ẢNH BÍ MẬT CỦA BẠN VÀO ĐÂY ***
 			                modalImageURL = "assets/manager_screen.jpg"; 
 			                break;
 			            case "POPUP_MEMBER":
 			                modalTitle = "MEMBER FEATURE ENABLED";
 			                modalMessage = "👥 **THÀNH VIÊN:** Đã kích hoạt tính năng cộng đồng ẩn.";
-			                modalImageURL = ""; // Ví dụ: không có ảnh
+			                modalImageURL = ""; 
 			                break;
 			            case "POPUP_DEVELOPER":
 			                modalTitle = "DEVELOPER MODE INITIATED";
 			                modalMessage = `💻 **DEV MODE:** Console đã được mở khóa. Target: ${decodeURIComponent(finalTarget || 'N/A')}`;
-			                // *** THAY URL ẢNH BÍ MẬT CỦA BẠN VÀO ĐÂY ***
 			                modalImageURL = "assets/dev_terminal.gif"; 
 			                break;
 			            default:
@@ -710,33 +897,111 @@
 			                modalImageURL = "";
 			        }
 			
-			        // ✅ HIỂN THỊ POPUP BÍ MẬT (MODAL)
 			        showSecretModal(modalTitle, modalMessage, modalImageURL);
 			
-			        // 3. (Quan trọng) XÓA TẤT CẢ CÁC KHÓA BÍ MẬT KHỎI SESSION STORAGE
+			        // Xóa các khóa bí mật
 			        sessionStorage.removeItem('isForwarded');
 			        sessionStorage.removeItem('secretPopupKey');
-			        
-			        // 4. Xóa tham số URL công khai (finalTarget) để link sạch hoàn toàn
 			        const newURL = window.location.pathname; 
 			        history.replaceState(null, '', newURL); 
-			
-			    } 
+			        
+			    } else {
+			        // C. Nếu KHÔNG có chuyển hướng bí mật, gán sự kiện cho Nút Khởi động
+			        if (startButton) {
+			            // Đây là phần sửa lỗi, đảm bảo lắng nghe sự kiện CLICK
+			            startButton.addEventListener('click', function() {
+			                startBackgroundMusic(); 
+			                startupOverlay.classList.add('hidden');
+			            });
+			        }
+			    }
 			    
-			    // Luôn đảm bảo thanh trượt (slider) và giao diện được cập nhật đúng
+			    // 4. Cập nhật giao diện (Giữ nguyên)
 			    const activeBtn = document.querySelector('nav a.active-link');
 			    if (activeBtn) {
 			        updateSliderPosition(activeBtn.id);
-			    }
-			
-			    // Chạy lại DOMContentLoaded logic nếu cần
-			    if (!activeBtn) {
+			    } else {
 			        updateSliderPosition('btn-home');
 			    }
 			};
 			
-			// --- KẾT THÚC: MÃ XỬ LÝ POPUP BÍ MẬT (ĐÃ CHUYỂN SANG MODAL) ---
-			
+			// --- KẾT THÚC: MÃ XỬ LÝ POPUP BÍ MẬT VÀ KHỞI ĐỘNG HỆ THỐNG ĐÃ SỬA LỖI CUỐI CÙNG ---
+
+			// Thêm hoặc đảm bảo hàm này tồn tại
+			function startBackgroundMusic() {
+			    const audio = document.getElementById('background-music');
+			    if (!audio) return; 
+			    
+			    // Đặt âm lượng ở mức vừa phải (ví dụ: 40%)
+			    audio.volume = 0.4; 
+			    
+			    // Lệnh play() này phải nằm trong hàm, được gọi sau khi nút được nhấn
+			    audio.play().then(() => {
+			        console.log("Nhạc nền đã được kích hoạt.");
+			    }).catch(error => {
+			        console.error("Lỗi: Không thể phát nhạc nền.", error);
+			    });
+			}
+
+
+					// --- BẮT ĐẦU: MÃ JAVASCRIPT TẠO HẠT BỤI TÙY CHỈNH (HỖ TRỢ 2 LAYER) ---
+					// Thêm tham số 'parentSelector' để chọn lớp cha
+					function generateDustParticles(count, className, parentSelector, durationMin, durationMax, opacityMin, opacityMax) { 
+					    const overlay = document.querySelector(parentSelector); // SỬ DỤNG SELECTOR ĐỂ CHỌN LỚP CHA
+					    if (!overlay) return; // Thoát nếu không tìm thấy lớp cha
+					    
+					    const screenWidth = window.innerWidth;
+					    const screenHeight = window.innerHeight;
+					    
+					    for (let i = 0; i < count; i++) {
+					        const particle = document.createElement('div');
+					        particle.className = className;
+					        
+					        const startX = Math.random() * screenWidth;
+					        const startY = Math.random() * screenHeight;
+					        
+					        particle.style.left = `${startX}px`;
+					        particle.style.top = `${startY}px`;
+					        
+					        const delay = Math.random() * 60; 
+					        particle.style.animationDelay = `-${delay}s`;
+					        
+					        const duration = durationMin + Math.random() * (durationMax - durationMin);
+					        particle.style.animationDuration = `${duration}s`;
+					        
+					        const initialOpacity = opacityMin + Math.random() * (opacityMax - opacityMin);
+					        particle.style.opacity = initialOpacity;
+					        
+					        overlay.appendChild(particle);
+					    }
+					}
+					// --- KẾT THÚC: MÃ JAVASCRIPT TẠO HẠT BỤI TÙY CHỈNH ---
+					// Gọi hàm để tạo cả hai lớp hạt bụi khi trang được tải
+					document.addEventListener('DOMContentLoaded', () => {
+					    // 1. Lớp Nền (Background Layer) - Z-index thấp
+					    generateDustParticles(
+					        18, 
+					        'dust-particle', 
+					        '.dust-overlay-background', // CHÈN VÀO LỚP NỀN (Z-INDEX: 1)
+					        18, 
+					        180, 
+					        0.1, 
+					        0.5
+					    );
+					    
+					    // 2. Lớp Phủ Ngoài (Foreground Layer) - Z-index cao
+					    generateDustParticles(
+					        8, 
+					        'dust-particle-foreground', 
+					        '.dust-overlay', // CHÈN VÀO LỚP PHỦ NGOÀI (Z-INDEX: 800000)
+					        8, 
+					        18, 
+					        0.05, 
+					        0.3
+					    );
+					});
+
+
 			
 		</script>
 		
@@ -750,6 +1015,9 @@
             <button class="close-btn" onclick="closeSecretModal()">CLOSE [SYSTEM ONLINE]</button>
         </div>
     </div>
+    
+    
+    	<div class="dust-overlay"></div>
     </body>
 
 </html>
