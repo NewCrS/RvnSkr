@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Đang chuyển hướng - Phase Shift</title>
+    <style>
+        body {
+            background: #000;
+            color: #00BBFF;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+    </style>
+</head>
+<body>
+    <h1>[PROCESSING REDIRECTION...]</h1>
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        // Lấy thông tin công khai
+        const id = params.get('id');
+        const target = params.get('target');
+        
+        // Lấy thông tin bí mật từ sessionStorage (đã lưu ở bước 1)
+        const popupType = sessionStorage.getItem('tempPopupType');
+
+        if (id && target && popupType) {
+            // 1. Lưu lại loại Popup và Token Xác nhận vào sessionStorage
+            sessionStorage.setItem('secretPopupKey', popupType); 
+            sessionStorage.setItem('isForwarded', 'true');
+
+            // 2. Xóa giá trị tạm thời
+            sessionStorage.removeItem('tempPopupType');
+
+            // 3. Tạo URL chuyển hướng ngược lại trang gốc
+            // Chúng ta chỉ truyền finalTarget qua URL.
+            // Nếu bạn muốn URL sạch 100% không có bất kỳ tham số nào, hãy dùng: const finalURL = `/`;
+            const finalURL = `/?finalTarget=${encodeURIComponent(target)}`;
+            
+            // Thực hiện chuyển hướng ngược lại trang gốc
+            window.location.replace(finalURL);
+            
+        } else {
+            // Trường hợp lỗi hoặc truy cập trực tiếp
+            console.error("Lỗi chuyển tiếp. Thiếu thông tin hoặc không hợp lệ.");
+            window.location.replace("/");
+        }
+    </script>
+</body>
+</html>
