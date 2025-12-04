@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cộng đồng Rvn</title>
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #000;
+            color: #00BBFF;
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+
+        .title {
+            font-size: 3em;
+            font-weight: bold;
+            margin-top: 40px;
+            color: #00AAFF;
+            text-shadow: 0 0 10px #00BBFF;
+        }
+
+        .desc-box {
+            width: 90%;
+            max-width: 900px;
+            margin: 20px auto;
+            padding: 20px;
+            border: transparent;
+            background: rgba(0, 0, 0, 0.7);
+            box-shadow: transparent;
+            border-radius: 8px;
+            line-height: 1.8em;
+            font-size: 1.1em;
+            text-align: left;
+            white-space: pre-wrap;
+        }
+
+        .cursor {
+            display: inline-block;
+            width: 8px;
+            background: #FF00FF;
+            margin-left: 3px;
+            animation: blink 0.8s infinite;
+        }
+
+        @keyframes blink {
+            0% { opacity: 1; }
+            50% { opacity: 0; }
+            100% { opacity: 1; }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="title">CỘNG ĐỒNG RVN</div>
+
+    <div class="desc-box">
+        <span id="typewriter"></span><span class="cursor"></span>
+    </div>
+
+
+<script>
+    const text = 
+`Cộng đồng Rvn (RevenantSkr) là một không gian mở dành cho những người yêu thích công nghệ,
+khám phá sáng tạo, chia sẻ dự án cá nhân và hỗ trợ nhau trong quá trình học hỏi.
+
+Chúng tôi tập trung vào phát triển ý tưởng, xây dựng công cụ, xử lý kỹ thuật số và tạo ra các sản phẩm có tính ứng dụng thực tế.  
+
+Mục tiêu của Rvn là tạo ra một môi trường nơi mọi người có thể cùng nhau thảo luận, hợp tác và thúc đẩy những dự án độc lập phát triển mạnh mẽ hơn.
+
+Mọi thành viên đều có thể đóng góp và cùng xây dựng một cộng đồng bền vững, chuyên nghiệp nhưng vẫn giữ tinh thần tự do sáng tạo.`;
+
+    let index = 0;
+    const speed = 25;
+    const tw = document.getElementById("typewriter");
+
+    function type() {
+        if (index < text.length) {
+            tw.textContent += text.charAt(index);
+            index++;
+
+            // ⭐ TỰ ĐỘNG CUỘN THEO VĂN BẢN GÕ TỪ TỪ
+            window.scrollTo(0, document.body.scrollHeight);
+
+            setTimeout(type, speed);
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", type);
+</script>
+</body>
+</html>
