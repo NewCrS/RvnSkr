@@ -1,3 +1,4 @@
+</html>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -111,7 +112,7 @@
         box-shadow: 0 0 60px #00bbff44;
     }
     
-    /* KHỐI CSS MỚI */
+    /* KHỐI CSS MỚI: ĐÃ CHỈNH SỬA TỶ LỆ */
     .screen-content {
         display: flex;
         width: 100%;
@@ -122,7 +123,8 @@
     }
 
     .left-side {
-        flex: 1;
+        /* ĐÃ CHỈNH SỬA: Chiếm 65% */
+        flex: 0 0 65%; 
         padding: 5px;
         display: flex;
         flex-direction: column;
@@ -130,10 +132,11 @@
     }
 
     .right-side {
-        flex: 1;
+        /* ĐÃ CHỈNH SỬA: Chiếm 35% */
+        flex: 0 0 35%; 
         display: flex;
         flex-direction: column;
-        padding: 5px;
+        padding: 5px 0 5px 5px; /* Điều chỉnh padding */
         justify-content: space-between;
         align-items: center;
     }
@@ -159,48 +162,50 @@
 
     /* Pie Chart Area - Đồ thị tròn */
     .pie-chart {
-        width: 80px;
-        height: 80px;
+        width: 72px; /* Thu nhỏ chút để vừa 35% */
+        height: 72px; /* Thu nhỏ chút để vừa 35% */
         border-radius: 50%;
         background: conic-gradient(
             #00ccff 0% 30%, 
             #00ddff 30% 60%, 
-            #0088ff 60% 85%, 
+            #0090ff 60% 85%, 
             #00aaff 85% 100% 
         );
-        transform: translate(24px, -10px); 
+        /* ĐÃ CHỈNH SỬA VỊ TRÍ để căn giữa tốt hơn trong 35% */
+        transform: translateX(-8px);  
+        
         border: 2px solid #00bbff;
         box-shadow: 0 0 10px #00bbff;
-        /* TRANSITION ĐÃ ĐƯỢC CHỈNH SỬA */
         transition: background 0.08s linear; 
     }
 
     /* Bar Chart Area - Biểu đồ cột */
     .bar-chart {
-        width: 100%;
+        width: 65%; /* Đã chỉnh thành 100% để lấp đầy 35% */
         height: 60px;
         display: flex;
         justify-content: space-around;
         align-items: flex-end;
         padding: 0;
-        margin-left: 10px; 
+        margin-left: 0; 
+        /* ĐÃ CHỈNH SỬA VỊ TRÍ để căn giữa tốt hơn */
+        transform: translate(40, 8); 
     }
 
     .bar {
-        width: 8px;
+        width: 6px; /* Thu nhỏ cột lại để phù hợp */
         background-color: #fff;
         box-shadow: 0 0 5px #aaa;
         border-radius: 2px 2px 0 0;
-        /* TRANSITION ĐÃ CÓ VÀ ĐỦ NHANH */
         transition: height 0.08s ease-out; 
     }
     
     
     .bar:nth-child(1) { height: 40px; background-color: #0088cc; }
-    .bar:nth-child(2) { height: 50px; background-color: #00bbff; }
+    .bar:nth-child(2) { height: 50px; background-color: #00dddd; }
     .bar:nth-child(3) { height: 25px; background-color: #00ddff; }
     .bar:nth-child(4) { height: 55px; background-color: #00ffff; }
-    .bar:nth-child(5) { height: 30px; background-color: #0099ff; }
+    .bar:nth-child(5) { height: 30px; background-color: #00ccff; }
 
 </style>
 </head>
@@ -233,9 +238,9 @@
         <div class="shoulders"></div>
     </div>
 </div>
-
 <script>
-    // KHỐI JAVASCRIPT: CHỮ ĐỘNG (GIỮ NGUYÊN)
+    // KHỐI JAVASCRIPT: CHỮ ĐỘNG VÀ CHART ĐỘNG
+    
     const textToType = 
     "RvnSkr OS v7.1.2 - Kernel Build 4096\n" +
     
@@ -323,91 +328,100 @@
 
     const typingArea = document.getElementById('typing-area');
     let charIndex = 0;
-    
     const cursorElement = typingArea.querySelector('.cursor');
+
+    // === LOGIC CUỘN THÔNG MINH ===
+    let isUserScrolling = false;
+
+    // Lắng nghe sự kiện scroll của người dùng
+    typingArea.addEventListener('scroll', () => {
+        // Kiểm tra xem người dùng có đang ở vị trí dưới cùng không
+        // scrollHeight - scrollTop === clientHeight có nghĩa là đang ở dưới cùng
+        // Cho phép sai số nhỏ (ví dụ 5px) do việc làm tròn số
+        const isAtBottom = typingArea.scrollHeight - typingArea.scrollTop <= typingArea.clientHeight + 5;
+
+        if (isAtBottom) {
+            isUserScrolling = false; // Đã quay về cuối, kích hoạt lại tự động cuộn
+        } else {
+            isUserScrolling = true; // Đã vuốt lên, dừng tự động cuộn
+        }
+    });
 
     function typeText() {
         if (charIndex < textToType.length) {
             const char = textToType.charAt(charIndex);
+            
+            // Xử lý ký tự
             if (char === '\n') {
                 typingArea.insertBefore(document.createElement('br'), cursorElement);
             } else {
                 typingArea.insertBefore(document.createTextNode(char), cursorElement);
             }
+            
             charIndex++;
+            
+            // === LOGIC CUỘN TỰ ĐỘNG CÓ ĐIỀU KIỆN ===
+            // Chỉ cuộn xuống nếu người dùng KHÔNG đang vuốt lên xem lịch sử
+            if (!isUserScrolling) {
+                typingArea.scrollTop = typingArea.scrollHeight;
+            }
+
             setTimeout(typeText, 50);
         } else {
             cursorElement.textContent = '_';
             cursorElement.style.animation = 'blink 1s step-start infinite'; 
         }
-        typingArea.scrollTop = typingArea.scrollHeight;
     }
 
 
     // =======================================================
-    // KHỐI CODE CHART ĐỘNG 📈 (ĐÃ ĐIỀU CHỈNH)
+    // KHỐI CODE CHART ĐỘNG 📈 (GIỮ NGUYÊN)
     // =======================================================
 
     const pieChart = document.querySelector('.pie-chart');
     const barChart = document.querySelector('.bar-chart');
     const bars = barChart ? barChart.querySelectorAll('.bar') : [];
     
-    // Khởi tạo trạng thái ban đầu cho biểu đồ tròn (4 phần)
     let currentV = [25, 25, 25, 25]; 
 
-    // Hàm tạo số ngẫu nhiên trong khoảng min/max (float)
     function getRandomFloat(min, max) {
         return Math.random() * (max - min) + min;
     }
 
-    // Hàm giới hạn giá trị trong khoảng min/max
     function clamp(num, min, max) {
         return Math.max(min, Math.min(max, num));
     }
 
     function updateCharts() {
-        // 1. Cập nhật Biểu đồ Cột (thay đổi nhỏ hơn)
+        // 1. Cập nhật Biểu đồ Cột
         bars.forEach(bar => {
-            // Lấy chiều cao hiện tại (từ style) hoặc giá trị mặc định 30px
             let currentHeight = parseFloat(bar.style.height) || 30; 
-
-            // Tạo thay đổi nhỏ (ví dụ: +- 4px)
             const delta = getRandomFloat(-4, 4);
-            
-            // Áp dụng giới hạn: Chiều cao mới phải nằm trong khoảng [10px, 55px]
             const newHeight = clamp(currentHeight + delta, 10, 55); 
             bar.style.height = `${newHeight}px`;
         });
 
-        // 2. Cập nhật Biểu đồ Tròn (thay đổi nhỏ hơn)
+        // 2. Cập nhật Biểu đồ Tròn
         let newV = currentV.map(v => {
-            // Tạo thay đổi nhỏ (ví dụ: +- 2%)
             const delta = getRandomFloat(-2, 2);
-            // Giới hạn giá trị của mỗi phần không dưới 5% và không quá 60%
             let val = clamp(v + delta, 5, 60); 
             return val;
         });
 
-        // Chuẩn hóa lại để tổng vẫn bằng 100
         const total = newV.reduce((sum, v) => sum + v, 0);
         newV = newV.map(v => (v / total) * 100);
         
-        // Cập nhật giá trị hiện tại
         currentV = newV;
 
-        // Tính các điểm dừng (stop points)
-        // Dùng Math.round để đảm bảo giá trị là số nguyên cho CSS
         const stop1 = Math.round(newV[0]);
         const stop2 = Math.round(stop1 + newV[1]);
         const stop3 = Math.round(stop2 + newV[2]);
         
-        // Màu sắc 
         const color1 = '#00ccff'; 
         const color2 = '#00ddff';
-        const color3 = '#0088ff';
+        const color3 = '#0090ff';
         const color4 = '#00aaff';
 
-        // Tạo chuỗi gradient mới
         const newGradient = `conic-gradient(
             ${color1} 0% ${stop1}%, 
             ${color2} ${stop1}% ${stop2}%, 
@@ -424,6 +438,7 @@
     // Bắt đầu cập nhật biểu đồ mỗi 100ms
     setInterval(updateCharts, 100); 
 </script>
+
 
 </body>
 </html>
