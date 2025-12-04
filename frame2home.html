@@ -13,6 +13,8 @@
             color: #00BBFF;
             font-family: Arial, sans-serif;
             text-align: center;
+            /* Thêm padding dưới để dễ cuộn hơn */
+            padding-bottom: 0px; 
         }
 
         .title {
@@ -41,8 +43,10 @@
         .cursor {
             display: inline-block;
             width: 8px;
-            background: #FF00FF;
+            height: 1em; /* Chỉnh lại chiều cao con trỏ cho đẹp */
+            background: #00bbff;
             margin-left: 3px;
+            vertical-align: middle;
             animation: blink 0.8s infinite;
         }
 
@@ -56,7 +60,7 @@
 
 <body>
 
-    <div class="title">CỘNG ĐỒNG RVN</div>
+    <div class="title">CỘNG ĐỒNG RVNSKR</div>
 
     <div class="desc-box">
         <span id="typewriter"></span><span class="cursor"></span>
@@ -75,16 +79,36 @@ Mục tiêu của Rvn là tạo ra một môi trường nơi mọi người có 
 Mọi thành viên đều có thể đóng góp và cùng xây dựng một cộng đồng bền vững, chuyên nghiệp nhưng vẫn giữ tinh thần tự do sáng tạo.`;
 
     let index = 0;
-    const speed = 25;
+    const speed = 35; // Tốc độ gõ
     const tw = document.getElementById("typewriter");
+
+    // --- LOGIC CUỘN THÔNG MINH ---
+    let isUserScrolling = false;
+
+    // Lắng nghe sự kiện cuộn của toàn bộ trang web (window)
+    window.addEventListener('scroll', () => {
+        // Tính toán vị trí: Chiều cao vùng nhìn thấy + Vị trí cuộn hiện tại
+        const scrollPosition = window.innerHeight + window.scrollY;
+        // Tổng chiều cao của trang web
+        const bodyHeight = document.body.offsetHeight;
+
+        // Kiểm tra xem người dùng có đang ở gần cuối trang không (cho phép sai số 10px)
+        if (scrollPosition >= bodyHeight +55) {
+            isUserScrolling = false; // Đang ở đáy -> Cho phép tự động cuộn
+        } else {
+            isUserScrolling = true;  // Đã vuốt lên -> Dừng tự động cuộn
+        }
+    });
 
     function type() {
         if (index < text.length) {
             tw.textContent += text.charAt(index);
             index++;
 
-            // ⭐ TỰ ĐỘNG CUỘN THEO VĂN BẢN GÕ TỪ TỪ
-            window.scrollTo(0, document.body.scrollHeight);
+            // Chỉ cuộn xuống nếu người dùng KHÔNG đang xem nội dung phía trên
+            if (!isUserScrolling) {
+                window.scrollTo(0, document.body.scrollHeight);
+            }
 
             setTimeout(type, speed);
         }
