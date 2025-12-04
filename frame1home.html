@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Frame1 Home</title>
 <style>
+    /* KHỐI CSS GỐC - KHÔNG THAY ĐỔI */
     body {
         margin: 0;
         padding: 0;
@@ -30,12 +31,51 @@
         position: absolute;
         width: 260px;
         height: 260px;
-        background: #00bbff;
+        background: #00000000;
         filter: blur(90px);
         border-radius: 99%;
         opacity: 0.8;
         z-index: 1;
     }
+
+    /* Màn hình phát sáng (Giữ nguyên) */
+    .glowing-screen {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 300px;
+        height: 180px;
+        background: #00bbff; /* Màu xanh neon */
+        border: 4px solid #00bbff;
+        box-shadow: 0 0 50px 10px rgba(0, 187, 255, 0.8),
+                    0 0 100px 30px rgba(0, 187, 255, 0.5); /* Hiệu ứng phát sáng mạnh */
+        z-index: 1; /* Đặt dưới hình bóng người */
+        border-radius: 5px;
+        /* Đã thêm: Display flex để tổ chức nội dung */
+        display: flex;
+        padding: 10px; /* Thêm padding cho nội dung */
+        box-sizing: border-box;
+        /* Đã thêm: Giữ cho nội dung không vượt ra ngoài màn hình */
+        overflow: hidden; 
+    }
+    
+    .table {
+        position: absolute;
+        /* Di chuyển xuống dưới 65% (hoặc một giá trị lớn hơn) để đặt bàn ở phía dưới màn hình */
+        top: 85%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 400px;
+        height: 40px;
+        /* Loại bỏ phát sáng */
+        background: #111111; /* Màu đen/xám đậm cho bàn */
+        border: 1px solid #333333; /* Viền tối */
+        box-shadow: none; /* LOẠI BỎ hiệu ứng phát sáng */
+        z-index: -1; /* Đặt bàn nằm trên người (vì bàn che khuất chân/ghế) */
+        border-radius: 10px 10px 0 0; /* Bo tròn phía trên */
+    }
+
 
     /* Logo người huyền bí — mạnh mẽ, nghiêm túc */
     .logo-person {
@@ -81,12 +121,115 @@
         border-radius: 50% 50% 10% 10%;
         box-shadow: 0 0 60px #00bbff44;
     }
+    
+    /* KHỐI CSS MỚI ĐƯỢC THÊM VÀO */
+    
+    /* Vùng chứa nội dung màn hình */
+    .screen-content {
+        display: flex;
+        width: 100%;
+        height: 100%;
+        background: transparent; /* Nền xanh đậm hơn cho nội dung */
+        color: #000000;
+        font-family: monospace;
+    }
+
+    .left-side {
+        flex: 1; /* Chiếm 50% chiều ngang */
+        padding: 5px;
+        display: flex;
+        flex-direction: column;
+        border-right: 1px solid rgba(0, 187, 255, 0.5);
+    }
+
+    .right-side {
+        flex: 1; /* Chiếm 50% chiều ngang còn lại */
+        display: flex;
+        flex-direction: column;
+        padding: 5px;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    /* Input Area - Phần nhập code/văn bản */
+    .input-area {
+        width: 100%;
+        height: 100%;
+        overflow-y: scroll;
+        white-space: pre-wrap;
+        font-size: 10px;
+        line-height: 1.2;
+        padding-right: 5px;
+    }
+    .input-area::before {
+        content: "> Connecting...\0A> Access granted.\0A> Running query: SELECT * FROM system_logs WHERE status='alert' AND severity>3;\0A----------------------\0A[2025-12-04 08:30:15] CRITICAL: Core system anomaly detected.\0A[2025-12-04 08:30:22] WARNING: User 'Commander' session initialized.\0A$ _";
+    }
+
+    /* Pie Chart Area - Đồ thị tròn */
+    .pie-chart {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: conic-gradient(
+            #00ccff 0% 30%, /* Hồng */
+            #00ddff 30% 60%, /* Xanh lá */
+            #0088ff 60% 85%, /* Vàng */
+            #00aaff 85% 100% /* Đỏ */
+        );
+        transform: translate(24px, -10px); 
+        border: 2px solid #00bbff;
+        box-shadow: 0 0 10px #00bbff;
+    }
+
+    /* Bar Chart Area - Biểu đồ cột */
+    .bar-chart {
+        width: 100%;
+        height: 60px;
+        display: flex;
+        justify-content: space-around;
+        align-items: flex-end;
+        padding: 0;
+        margin-left: 10px; 
+    }
+
+    .bar {
+        width: 8px;
+        background-color: #fff;
+        box-shadow: 0 0 5px #aaa;
+        border-radius: 2px 2px 0 0;
+    }
+    
+    
+    .bar:nth-child(1) { height: 40px; background-color: #0088cc; }
+    .bar:nth-child(2) { height: 50px; background-color: #00bbff; }
+    .bar:nth-child(3) { height: 25px; background-color: #00ddff; }
+    .bar:nth-child(4) { height: 55px; background-color: #00ffff; }
+    .bar:nth-child(5) { height: 30px; background-color: #0099ff; }
+
 </style>
 </head>
 <body>
 
 <div class="logo-container">
     <div class="glow"></div>
+    <div class="glowing-screen">
+        <div class="screen-content">
+            <div class="left-side">
+                <div class="input-area"></div>
+            </div>
+            <div class="right-side">
+                <div class="pie-chart"></div>
+                <div class="bar-chart">
+                    <div class="bar"></div>
+                    <div class="bar"></div>
+                    <div class="bar"></div>
+                    <div class="bar"></div>
+                    <div class="bar"></div>
+                </div>
+            </div>
+        </div>
+        </div>
+    <div class="table"></div>
     <div class="logo-person">
         <div class="head"></div>
         <div class="shoulders"></div>
