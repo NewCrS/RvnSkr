@@ -182,6 +182,28 @@
 		}
 		
 		
+    .glowing-screen {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 300px;
+        height: 180px;
+        background: #00bbff;
+        border: 4px solid #00bbff;
+        box-shadow: 0 0 50px 10px rgba(0, 187, 255, 0.8),
+                    0 0 100px 30px rgba(0, 187, 255, 0.5);
+        z-index: 1;
+        border-radius: 5px;
+        display: flex;
+        padding: 10px;
+        
+        box-sizing: border-box;
+        overflow: hidden; 
+    }
+
+		
+		
 		.phasing-through header,
 		.phasing-through nav {
 			filter: blur(6px);
@@ -598,9 +620,18 @@
 			        opacity: 0.1;
 			    }
 			}
+			
 
+.glow-frame {
+    background: #00aadd00;
+    border: 0px solid #00aadd;
+    border-radius: 0px;
 
-
+    box-shadow: none; /*
+        0 0 30px 10px #00aadd,   
+        0 0 70px 18px #00aadd,  
+        0 0 100px 40px #00aadd;  */
+}
 
 
 
@@ -641,8 +672,8 @@
 	<div class="content-area">
 		<div id="home" class="tab-content active">
 			<div class="dual-frame">
-				<iframe src="frame1home.html" class="frame-box slide-left"></iframe>
-				<iframe src="frame2home.html" class="frame-box slide-right"></iframe>
+				<iframe src="frame1home.html" class="frame-box slide-left glow-frame"></iframe>
+				<iframe src="frame2home.html" class="frame-box slide-right"></iframe>    
 			</div>
 		</div>
 		

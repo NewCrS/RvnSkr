@@ -10,12 +10,22 @@
     body {
         margin: 0;
         padding: 0;
-        background: #000;
+        background: transparent;
         display: flex;
         justify-content: center;
         align-items: center;
         height: 100vh;
         overflow: hidden;
+    }
+
+    .br {
+        position: relative;
+        width: 500px;
+        height: 400px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: -4;
     }
 
     .logo-container {
@@ -25,17 +35,6 @@
         display: flex;
         justify-content: center;
         align-items: center;
-    }
-
-    .glow {
-        position: absolute;
-        width: 260px;
-        height: 260px;
-        background: #00000000;
-        filter: blur(90px);
-        border-radius: 99%;
-        opacity: 0.8;
-        z-index: 1;
     }
 
     .glowing-screen {
@@ -48,13 +47,13 @@
         background: #00bbff;
         border: 4px solid #00bbff;
         box-shadow: 0 0 50px 10px rgba(0, 187, 255, 0.8),
-                    0 0 100px 30px rgba(0, 187, 255, 0.5);
+            0 0 100px 30px rgba(0, 187, 255, 0.5);
         z-index: 1;
         border-radius: 5px;
         display: flex;
         padding: 10px;
         box-sizing: border-box;
-        overflow: hidden; 
+        overflow: hidden;
     }
     
     .table {
@@ -86,7 +85,7 @@
         height: 85px;
         background: #000;
         border-radius: 50%;
-        box-shadow: 0 0 25px #00bbff77;
+        box-shadow: 0 0 5px #00bbff77;
         margin-bottom: 12px;
     }
 
@@ -212,7 +211,8 @@
 <body>
 
 <div class="logo-container">
-    <div class="glow"></div>
+    
+    
     <div class="glowing-screen">
         <div class="screen-content">
             <div class="left-side">
