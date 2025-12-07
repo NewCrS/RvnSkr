@@ -45,7 +45,6 @@
             pointer-events: none;
         }
         #overlay-text {
-            /* ... (CSS giữ nguyên) ... */
             position: absolute;
             top: 50%;
             left: 50%;
@@ -62,7 +61,6 @@
             z-index: 10;
         }
         #status-message {
-             /* ... (CSS giữ nguyên) ... */
              margin-top: 10px;
             padding: 15px;
             border-radius: 8px;
@@ -165,6 +163,7 @@
                 return new Promise((resolve) => {
                     video.onloadedmetadata = () => {
                         video.play();
+                        // Gán kích thước canvas theo kích thước thực của video
                         canvas.width = video.videoWidth;
                         canvas.height = video.videoHeight;
                         startDetectionLoop();
@@ -177,7 +176,7 @@
         }
 
         /**
-         * 2. Vòng lặp Nhận dạng Cử chỉ
+         * 2. Vòng lặp Nhận dạng Cử chỉ (Đã sửa lỗi Tọa độ)
          */
         function startDetectionLoop() {
             const detect = async () => {
@@ -189,13 +188,25 @@
                 if (hands.length > 0) {
                     const hand = hands[0];
                     
-                    // Lấy keypoints 3D và chuẩn hóa tọa độ X, Y cho canvas
-                    const landmarks = hand.keypoints3D ? hand.keypoints3D.map(p => ({
-                        x: p.x * canvas.width, 
-                        y: p.y * canvas.height, 
-                        z: p.z * canvas.width, 
-                        name: p.name
-                    })) : hand.keypoints;
+                    // Hàm tiện ích để tìm tọa độ Z từ keypoints3D
+                    const getZCoord = (id) => {
+                        if (hand.keypoints3D && hand.keypoints3D[id]) {
+                            // keypoints3D.z là tọa độ chuẩn hóa. Nhân với chiều rộng canvas để có giá trị tương đối.
+                            return hand.keypoints3D[id].z * canvas.width;
+                        }
+                        return 0;
+                    };
+
+                    // CHUẨN HÓA TỌA ĐỘ: Sử dụng tọa độ 2D (keypoints) để vẽ và chia tỷ lệ 
+                    // theo kích thước thực của video và kích thước canvas.
+                    const landmarks = hand.keypoints.map((p, index) => {
+                        return {
+                            x: p.x * (canvas.width / video.videoWidth), 
+                            y: p.y * (canvas.height / video.videoHeight), 
+                            z: getZCoord(index), // Lấy tọa độ Z
+                            name: p.name
+                        };
+                    });
 
                     // 3. THỰC HIỆN LOGIC NHẬN DẠNG CỬ CHỈ TRÁI
                     if (isTargetGesture(hand, landmarks)) {
@@ -226,12 +237,8 @@
             }
 
             // 3.2. KIỂM TRA TRẠNG THÁI CÁC NGÓN TAY
-            // Cử chỉ Gập: Khoảng cách giữa khớp TIP và DIP (khớp cuối) nhỏ.
-            // Cử chỉ Giơ: Khoảng cách giữa khớp TIP và DIP lớn.
-
             // Ngón tay được coi là giơ ra nếu đầu ngón tay (TIP) xa gốc ngón tay (MCP) hơn một ngưỡng nào đó.
-            // Hoặc, kiểm tra độ thẳng bằng khoảng cách TIP-PIP so với TIP-DIP.
-
+            
             const checkFingerStraight = (tip_index, pip_index, mcp_index) => {
                 const tip = landmarks[tip_index];
                 const pip = landmarks[pip_index];
@@ -243,18 +250,19 @@
                 const dist_pip_mcp = distance(pip, mcp);
                 
                 // Ngón tay giơ ra khi TIP xa MCP hơn PIP một khoảng đáng kể (ngón thẳng)
-                return (dist_tip_mcp / dist_pip_mcp) > 1.4; // Ngưỡng 1.4 (Có thể tinh chỉnh)
+                // Ngưỡng 1.4 có thể cần tinh chỉnh nếu video/canvas có tỉ lệ khác nhau
+                return (dist_tip_mcp / dist_pip_mcp) > 1.4; 
             };
 
             const checkFingerFolded = (tip_index, dip_index, pip_index) => {
-                // Ngón tay gập khi TIP gần PIP hoặc DIP hơn so với khi nó thẳng.
+                // Ngón tay gập khi TIP gần DIP (khớp cuối)
                 const dist_tip_dip = distance(landmarks[tip_index], landmarks[dip_index]);
-                // Nếu khoảng cách TIP-DIP nhỏ, ngón tay gập.
-                return dist_tip_dip < 30; // Ngưỡng 30px (Có thể tinh chỉnh)
+                // Ngưỡng 30px (Có thể tinh chỉnh sau khi sửa lỗi tọa độ)
+                return dist_tip_dip < 30; 
             };
 
-            // Ngón Cái (Khác biệt): Thẳng nếu TIP xa MCP
-            const isThumbUp = distance(landmarks[FINGER_LANDMARKS.THUMB_TIP], landmarks[FINGER_LANDMARKS.THUMB_MCP]) > 70; // Ngưỡng 70
+            // Ngón Cái (Khác biệt): Thẳng nếu TIP xa MCP. Ngưỡng 70px.
+            const isThumbUp = distance(landmarks[FINGER_LANDMARKS.THUMB_TIP], landmarks[FINGER_LANDMARKS.THUMB_MCP]) > 70; 
 
             // Ngón Trỏ, Giữa GIƠ RA
             const isIndexUp = checkFingerStraight(FINGER_LANDMARKS.INDEX_FINGER_TIP, FINGER_LANDMARKS.INDEX_FINGER_PIP, FINGER_LANDMARKS.INDEX_FINGER_MCP);
@@ -265,8 +273,7 @@
             const isPinkyFolded = checkFingerFolded(FINGER_LANDMARKS.PINKY_FINGER_TIP, FINGER_LANDMARKS.PINKY_FINGER_DIP, FINGER_LANDMARKS.PINKY_FINGER_PIP);
             
             // 3.3. KIỂM TRA LÒNG BÀN TAY HƯỚNG VÀO (Thông qua vị trí Z)
-            // Kiểm tra xem đầu ngón tay (Z nhỏ hơn) có gần camera hơn gốc ngón tay (Z lớn hơn) không.
-            // Điều này đảm bảo lòng bàn tay hướng về phía camera.
+            // Lòng bàn tay hướng vào: Đầu ngón tay (Z nhỏ hơn) gần camera hơn gốc ngón tay (Z lớn hơn).
             const isPalmFacing = landmarks[FINGER_LANDMARKS.INDEX_FINGER_TIP].z < landmarks[FINGER_LANDMARKS.INDEX_FINGER_MCP].z;
 
             // TỔNG HỢP CỬ CHỈ
@@ -274,7 +281,6 @@
         }
 
         function handleSuccess() {
-            // ... (Hàm giữ nguyên) ...
             window.isGestureSuccessful = true;
             cancelAnimationFrame(animationFrameId); 
 
@@ -287,7 +293,6 @@
         }
 
         function drawHandLandmarks(landmarks) {
-            // ... (Hàm giữ nguyên) ...
             const connections = [
                 [0, 1], [1, 2], [2, 3], [3, 4], 
                 [0, 5], [5, 6], [6, 7], [7, 8], 
