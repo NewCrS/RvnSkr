@@ -1,0 +1,325 @@
+</html>
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kiểm Tra Cử Chỉ Bàn Tay Trái (GitHub Pages)</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.13.0/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/hand-pose-detection@2.0.0/dist/hand-pose-detection.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1646424915/hands.js"></script> 
+    
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #1a1a1a;
+            color: #f0f0f0;
+        }
+        #video-container {
+            position: relative;
+            width: 90%;
+            max-width: 640px;
+            margin-bottom: 20px;
+            background-color: #000;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+        }
+        #video-feed, #canvas-output {
+            width: 100%;
+            height: auto;
+            display: block;
+            transform: scaleX(-1); /* Lật ngang để tạo cảm giác như gương */
+        }
+        #canvas-output {
+            position: absolute;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+        }
+        #overlay-text {
+            /* ... (CSS giữ nguyên) ... */
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 1.3em;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px 25px;
+            border-radius: 8px;
+            width: 90%;
+            box-sizing: border-box;
+            transition: all 0.5s ease;
+            z-index: 10;
+        }
+        #status-message {
+             /* ... (CSS giữ nguyên) ... */
+             margin-top: 10px;
+            padding: 15px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 1.1em;
+            width: 90%;
+            max-width: 640px;
+            text-align: center;
+        }
+        .status-initial { background-color: #3f51b5; color: white; }
+        .status-processing { background-color: #ff9800; color: #333; }
+        .status-success { background-color: #4CAF50; color: white; animation: pulse 1s infinite; }
+        .status-error { background-color: #f44336; color: white; }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+            100% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="video-container">
+        <video id="video-feed" autoplay playsinline></video>
+        <canvas id="canvas-output"></canvas> 
+        <div id="overlay-text">
+            ⌛ Đang tải mô hình...
+        </div>
+    </div>
+
+    <div id="status-message" class="status-initial">
+        Đang chờ quyền truy cập Camera và tải mô hình Học máy. (Yêu cầu HTTPS hoặc Localhost)
+    </div>
+
+    <script>
+        const video = document.getElementById('video-feed');
+        const canvas = document.getElementById('canvas-output');
+        const ctx = canvas.getContext('2d');
+        const overlayText = document.getElementById('overlay-text');
+        const statusMessage = document.getElementById('status-message');
+        
+        let detector;
+        let animationFrameId;
+        window.isGestureSuccessful = false;
+
+        // Điểm mốc quan trọng (theo MediaPipe)
+        const FINGER_LANDMARKS = {
+            WRIST: 0,
+            THUMB_CMC: 1, THUMB_MCP: 2, THUMB_IP: 3, THUMB_TIP: 4,
+            INDEX_FINGER_MCP: 5, INDEX_FINGER_PIP: 6, INDEX_FINGER_DIP: 7, INDEX_FINGER_TIP: 8,
+            MIDDLE_FINGER_MCP: 9, MIDDLE_FINGER_PIP: 10, MIDDLE_FINGER_DIP: 11, MIDDLE_FINGER_TIP: 12,
+            RING_FINGER_MCP: 13, RING_FINGER_PIP: 14, RING_FINGER_DIP: 15, RING_FINGER_TIP: 16,
+            PINKY_MCP: 17, PINKY_FINGER_PIP: 18, PINKY_FINGER_DIP: 19, PINKY_FINGER_TIP: 20
+        };
+
+        // Hàm giúp tính khoảng cách giữa hai điểm trong không gian 3D
+        function distance(p1, p2) {
+            return Math.sqrt(
+                Math.pow(p1.x - p2.x, 2) + 
+                Math.pow(p1.y - p2.y, 2) + 
+                Math.pow(p1.z - p2.z, 2)
+            );
+        }
+
+        /**
+         * 1. Thiết lập Camera và Tải mô hình
+         */
+        async function setupDetector() {
+            try {
+                const model = handPoseDetection.SupportedModels.MediaPipeHands;
+                const detectorConfig = {
+                    runtime: 'mediapipe',
+                    // Sử dụng đường dẫn tuyệt đối cho các tệp nhị phân cần thiết của MediaPipe
+                    solutionPath: 'https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1646424915', 
+                    modelType: 'full'
+                };
+                detector = await handPoseDetection.createDetector(model, detectorConfig);
+
+                overlayText.innerHTML = "✅ Mô hình đã tải. Đang xin quyền Camera...";
+                statusMessage.textContent = "✅ Mô hình đã tải. Vui lòng cấp quyền Camera.";
+                statusMessage.classList.remove('status-initial');
+                statusMessage.classList.add('status-processing');
+                
+                await setupCamera();
+
+            } catch (error) {
+                console.error("Lỗi khi tải mô hình hoặc camera:", error);
+                statusMessage.textContent = `❌ Lỗi nghiêm trọng: Không thể tải mô hình hoặc camera. Vui lòng kiểm tra kết nối mạng và quyền camera.`;
+                statusMessage.classList.remove('status-initial', 'status-processing');
+                statusMessage.classList.add('status-error');
+                overlayText.innerHTML = "❌ LỖI KHỞI TẠO";
+            }
+        }
+
+        async function setupCamera() {
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                video.srcObject = stream;
+
+                return new Promise((resolve) => {
+                    video.onloadedmetadata = () => {
+                        video.play();
+                        canvas.width = video.videoWidth;
+                        canvas.height = video.videoHeight;
+                        startDetectionLoop();
+                        resolve(true);
+                    };
+                });
+            } else {
+                throw new Error("Trình duyệt không hỗ trợ MediaDevices API.");
+            }
+        }
+
+        /**
+         * 2. Vòng lặp Nhận dạng Cử chỉ
+         */
+        function startDetectionLoop() {
+            const detect = async () => {
+                // flipHorizontal: false vì chúng ta đã lật bằng CSS (transform: scaleX(-1))
+                const hands = await detector.estimateHands(video, { flipHorizontal: false }); 
+
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                if (hands.length > 0) {
+                    const hand = hands[0];
+                    
+                    // Lấy keypoints 3D và chuẩn hóa tọa độ X, Y cho canvas
+                    const landmarks = hand.keypoints3D ? hand.keypoints3D.map(p => ({
+                        x: p.x * canvas.width, 
+                        y: p.y * canvas.height, 
+                        z: p.z * canvas.width, 
+                        name: p.name
+                    })) : hand.keypoints;
+
+                    // 3. THỰC HIỆN LOGIC NHẬN DẠNG CỬ CHỈ TRÁI
+                    if (isTargetGesture(hand, landmarks)) {
+                        handleSuccess();
+                    } else {
+                        drawHandLandmarks(landmarks);
+                        overlayText.innerHTML = `✋ **Đang kiểm tra bàn tay TRÁI...** <br> Yêu cầu: Giơ **${hand.handedness === 'Left' ? 'TRÁI' : 'PHẢI'}** - Giơ (cái, trỏ, giữa), Gập (áp út, út).`;
+                    }
+                } else {
+                    overlayText.innerHTML = "👋 **YÊU CẦU:** <br> Giơ bàn tay TRÁI vào camera.";
+                }
+
+                if (!window.isGestureSuccessful) {
+                    animationFrameId = requestAnimationFrame(detect);
+                }
+            };
+            detect();
+        }
+
+        /**
+         * 3. Logic Nhận dạng Cử chỉ Mục tiêu (Sử dụng khoảng cách giữa các khớp)
+         */
+        function isTargetGesture(hand, landmarks) {
+            // 3.1. KIỂM TRA BÀN TAY TRÁI (Handedness)
+            // Mô hình xác định bàn tay TRÁI
+            if (hand.handedness !== 'Left') {
+                return false; 
+            }
+
+            // 3.2. KIỂM TRA TRẠNG THÁI CÁC NGÓN TAY
+            // Cử chỉ Gập: Khoảng cách giữa khớp TIP và DIP (khớp cuối) nhỏ.
+            // Cử chỉ Giơ: Khoảng cách giữa khớp TIP và DIP lớn.
+
+            // Ngón tay được coi là giơ ra nếu đầu ngón tay (TIP) xa gốc ngón tay (MCP) hơn một ngưỡng nào đó.
+            // Hoặc, kiểm tra độ thẳng bằng khoảng cách TIP-PIP so với TIP-DIP.
+
+            const checkFingerStraight = (tip_index, pip_index, mcp_index) => {
+                const tip = landmarks[tip_index];
+                const pip = landmarks[pip_index];
+                const mcp = landmarks[mcp_index];
+
+                // Khoảng cách từ đầu ngón tay đến khớp MCP (gốc ngón)
+                const dist_tip_mcp = distance(tip, mcp);
+                // Khoảng cách từ khớp PIP (khớp giữa) đến khớp MCP
+                const dist_pip_mcp = distance(pip, mcp);
+                
+                // Ngón tay giơ ra khi TIP xa MCP hơn PIP một khoảng đáng kể (ngón thẳng)
+                return (dist_tip_mcp / dist_pip_mcp) > 1.4; // Ngưỡng 1.4 (Có thể tinh chỉnh)
+            };
+
+            const checkFingerFolded = (tip_index, dip_index, pip_index) => {
+                // Ngón tay gập khi TIP gần PIP hoặc DIP hơn so với khi nó thẳng.
+                const dist_tip_dip = distance(landmarks[tip_index], landmarks[dip_index]);
+                // Nếu khoảng cách TIP-DIP nhỏ, ngón tay gập.
+                return dist_tip_dip < 30; // Ngưỡng 30px (Có thể tinh chỉnh)
+            };
+
+            // Ngón Cái (Khác biệt): Thẳng nếu TIP xa MCP
+            const isThumbUp = distance(landmarks[FINGER_LANDMARKS.THUMB_TIP], landmarks[FINGER_LANDMARKS.THUMB_MCP]) > 70; // Ngưỡng 70
+
+            // Ngón Trỏ, Giữa GIƠ RA
+            const isIndexUp = checkFingerStraight(FINGER_LANDMARKS.INDEX_FINGER_TIP, FINGER_LANDMARKS.INDEX_FINGER_PIP, FINGER_LANDMARKS.INDEX_FINGER_MCP);
+            const isMiddleUp = checkFingerStraight(FINGER_LANDMARKS.MIDDLE_FINGER_TIP, FINGER_LANDMARKS.MIDDLE_FINGER_PIP, FINGER_LANDMARKS.MIDDLE_FINGER_MCP);
+
+            // Ngón Áp Út, Út GẬP LẠI
+            const isRingFolded = checkFingerFolded(FINGER_LANDMARKS.RING_FINGER_TIP, FINGER_LANDMARKS.RING_FINGER_DIP, FINGER_LANDMARKS.RING_FINGER_PIP);
+            const isPinkyFolded = checkFingerFolded(FINGER_LANDMARKS.PINKY_FINGER_TIP, FINGER_LANDMARKS.PINKY_FINGER_DIP, FINGER_LANDMARKS.PINKY_FINGER_PIP);
+            
+            // 3.3. KIỂM TRA LÒNG BÀN TAY HƯỚNG VÀO (Thông qua vị trí Z)
+            // Kiểm tra xem đầu ngón tay (Z nhỏ hơn) có gần camera hơn gốc ngón tay (Z lớn hơn) không.
+            // Điều này đảm bảo lòng bàn tay hướng về phía camera.
+            const isPalmFacing = landmarks[FINGER_LANDMARKS.INDEX_FINGER_TIP].z < landmarks[FINGER_LANDMARKS.INDEX_FINGER_MCP].z;
+
+            // TỔNG HỢP CỬ CHỈ
+            return isThumbUp && isIndexUp && isMiddleUp && isRingFolded && isPinkyFolded && isPalmFacing;
+        }
+
+        function handleSuccess() {
+            // ... (Hàm giữ nguyên) ...
+            window.isGestureSuccessful = true;
+            cancelAnimationFrame(animationFrameId); 
+
+            overlayText.innerHTML = "🎉 **QUÉT THÀNH CÔNG!** 🎉 <br> Cử chỉ bàn tay trái đã được nhận dạng chính xác.";
+            overlayText.style.backgroundColor = 'rgba(76, 175, 80, 0.9)';
+            
+            statusMessage.textContent = "✅ Cử chỉ bàn tay trái đã được nhận dạng thành công!";
+            statusMessage.classList.remove('status-processing');
+            statusMessage.classList.add('status-success');
+        }
+
+        function drawHandLandmarks(landmarks) {
+            // ... (Hàm giữ nguyên) ...
+            const connections = [
+                [0, 1], [1, 2], [2, 3], [3, 4], 
+                [0, 5], [5, 6], [6, 7], [7, 8], 
+                [9, 10], [10, 11], [11, 12], 
+                [13, 14], [14, 15], [15, 16], 
+                [0, 17], [17, 18], [18, 19], [19, 20], 
+                [5, 9], [9, 13], [13, 17] 
+            ];
+
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = '#32CD32'; 
+            ctx.fillStyle = '#FF4500'; 
+
+            connections.forEach(([start, end]) => {
+                const p1 = landmarks[start];
+                const p2 = landmarks[end];
+                ctx.beginPath();
+                ctx.moveTo(p1.x, p1.y);
+                ctx.lineTo(p2.x, p2.y);
+                ctx.stroke();
+            });
+
+            landmarks.forEach(p => {
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, 5, 0, 2 * Math.PI); 
+                ctx.fill();
+            });
+        }
+
+        // Khởi động ứng dụng
+        setupDetector();
+        
+    </script>
+</body>
+</html>
