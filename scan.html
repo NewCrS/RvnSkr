@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kiểm Tra Cử Chỉ Bàn Tay Trái (GitHub Pages)</title>
+    <title>Kiểm Tra Cử Chỉ Ba Ngón Duỗi, Hai Ngón Gập (GitHub Pages)</title>
     
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.13.0/dist/tf.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/hand-pose-detection@2.0.0/dist/hand-pose-detection.min.js"></script>
@@ -239,6 +239,7 @@
 
         /**
          * 3. Logic Nhận dạng Cử chỉ Mục tiêu - Trả về trạng thái từng ngón
+         * Yêu cầu: Trỏ/Giữa Duỗi/Khép sát; Cái Duỗi/Khép sát; Áp Út/Út Gập.
          */
         function getFingerStatus(hand, landmarks) {
             
@@ -255,19 +256,19 @@
                 const pip = landmarks[pip_index];
                 const dist_tip_mcp = distance(tip, mcp);
                 const dist_pip_mcp = distance(pip, mcp);
-                // Phải duỗi thẳng
+                // Ngón duỗi thẳng
                 return (dist_tip_mcp / dist_pip_mcp) > 1.25; 
             };
 
             const checkFingerFolded = (tip_index, dip_index, pip_index) => {
                 const dist_tip_dip = distance(landmarks[tip_index], landmarks[dip_index]);
-                // Phải gập rõ ràng
-                return dist_tip_dip < 40; 
+                // Ngón gập sâu (Ngưỡng 30)
+                return dist_tip_dip < 30; 
             };
             
-            // 3.3. HÀM KIỂM TRA ĐIỀU KIỆN MỚI (Song song và Khép sát)
+            // 3.3. HÀM KIỂM TRA ĐIỀU KIỆN ĐẶC BIỆT
             
-            // Kiểm tra ngón trỏ và ngón giữa: Cả TIP và MCP đều phải gần nhau
+            // Kiểm tra ngón trỏ và ngón giữa: Cả TIP và MCP đều phải gần nhau (Khép sát/Song song)
             const checkIndexMiddleProximity = () => {
                 const index_tip = landmarks[FINGER_LANDMARKS.INDEX_FINGER_TIP];
                 const middle_tip = landmarks[FINGER_LANDMARKS.MIDDLE_FINGER_TIP];
@@ -277,50 +278,49 @@
                 const dist_tips = distance(index_tip, middle_tip);
                 const dist_mcps = distance(index_mcp, middle_mcp);
                 
-                // Ngưỡng: TIP cách nhau không quá 40, MCP cách nhau không quá 20
-                return dist_tips < 40 && dist_mcps < 20; 
+                // Ngưỡng: TIP cách nhau không quá 60, MCP cách nhau không quá 30.
+                return dist_tips < 60 && dist_mcps < 30; 
             };
-
-            // Kiểm tra ngón cái và ngón trỏ: Phải duỗi và khép vào ngón trỏ (song song)
-            const checkThumbIndexAlignment = () => {
+            
+            // Kiểm tra ngón cái Duỗi và Khép sát
+            const checkThumbAlignment = () => {
                 const thumb_tip = landmarks[FINGER_LANDMARKS.THUMB_TIP];
                 const thumb_mcp = landmarks[FINGER_LANDMARKS.THUMB_MCP];
                 const index_mcp = landmarks[FINGER_LANDMARKS.INDEX_FINGER_MCP];
-                const index_cmc = landmarks[FINGER_LANDMARKS.WRIST]; // Sử dụng WRIST làm điểm gốc
-                
-                // 1. Kiểm tra ngón cái duỗi thẳng (như cũ)
+
+                // 1. Kiểm tra ngón cái duỗi thẳng
                 const isThumbStraight = distance(thumb_tip, thumb_mcp) > 65; 
                 
-                // 2. Kiểm tra ngón cái KHÔNG QUÁ XA ngón trỏ (duỗi và khép)
-                // Khoảng cách giữa THUMB_CMC và INDEX_MCP phải nhỏ
+                // 2. Kiểm tra ngón cái KHÔNG QUÁ XA ngón trỏ (Khép sát)
                 const dist_thumb_index_base = distance(thumb_mcp, index_mcp);
 
-                // Ngưỡng: Phải duỗi và không mở rộng quá mức (vd: "like" button)
-                return isThumbStraight && dist_thumb_index_base < 50; 
+                // Ngưỡng: Phải duỗi và không mở rộng quá mức. Ngưỡng 60 là hợp lý cho tư thế khép sát.
+                return isThumbStraight && dist_thumb_index_base < 60; 
             };
 
             // 3.4. TÍNH TOÁN TRẠNG THÁI
             
-            // Các ngón cần DUỖI và KHÉP SÁT
+            // Ngón Trỏ & Giữa: Yêu cầu DUỖI và KHÉP
             const isIndexUp = checkFingerStraight(FINGER_LANDMARKS.INDEX_FINGER_TIP, FINGER_LANDMARKS.INDEX_FINGER_PIP, FINGER_LANDMARKS.INDEX_FINGER_MCP);
             const isMiddleUp = checkFingerStraight(FINGER_LANDMARKS.MIDDLE_FINGER_TIP, FINGER_LANDMARKS.MIDDLE_FINGER_PIP, FINGER_LANDMARKS.MIDDLE_FINGER_MCP);
             const isIndexMiddleClosed = checkIndexMiddleProximity();
 
-            // Ngón cái cần DUỖI và KHÉP SÁT
-            const isThumbCorrect = checkThumbIndexAlignment();
+            // Ngón Cái: Yêu cầu DUỖI và KHÉP
+            const isThumbCorrect = checkThumbAlignment();
             
-            // Các ngón cần GẬP
+            // Ngón Áp Út, Út: Yêu cầu GẬP
             const isRingFolded = checkFingerFolded(FINGER_LANDMARKS.RING_FINGER_TIP, FINGER_LANDMARKS.RING_FINGER_DIP, FINGER_LANDMARKS.RING_FINGER_PIP);
             const isPinkyFolded = checkFingerFolded(FINGER_LANDMARKS.PINKY_FINGER_TIP, FINGER_LANDMARKS.PINKY_FINGER_DIP, FINGER_LANDMARKS.PINKY_FINGER_PIP);
             
+            // TỔNG HỢP: Ngón cái DUỖI/KHÉP AND Trỏ DUỖI/KHÉP AND Giữa DUỖI/KHÉP AND Áp Út GẬP AND Út GẬP
             const allFingersCorrect = isThumbCorrect && isIndexUp && isMiddleUp && isIndexMiddleClosed && isRingFolded && isPinkyFolded;
 
             return {
                 isCorrectHand: true,
                 allFingersCorrect: allFingersCorrect,
-                thumb: isThumbCorrect, // Bao gồm cả duỗi thẳng và khép sát
-                index: isIndexUp && isIndexMiddleClosed, // Index phải duỗi và khép
-                middle: isMiddleUp && isIndexMiddleClosed, // Middle phải duỗi và khép
+                thumb: isThumbCorrect, 
+                index: isIndexUp && isIndexMiddleClosed, 
+                middle: isMiddleUp && isIndexMiddleClosed, 
                 ring: isRingFolded,
                 pinky: isPinkyFolded
             };
@@ -338,7 +338,7 @@
         }
 
         /**
-         * Hàm vẽ hitbox, nhận đối tượng trạng thái ngón tay để đổi màu.
+         * Hàm vẽ hitbox, nhận đối tượng trạng thái ngón tay để đổi màu. (Không đổi)
          */
         function drawHandLandmarks(landmarks, fingerStatus) {
             
@@ -355,17 +355,11 @@
 
             // 1. Vẽ các đoạn kết nối (xương)
             const segments = [
-                // Ngón cái
                 { indices: FINGER_SEGMENTS.THUMB, color: thumbColor },
-                // Ngón trỏ
                 { indices: FINGER_SEGMENTS.INDEX, color: indexColor },
-                // Ngón giữa
                 { indices: FINGER_SEGMENTS.MIDDLE, color: middleColor },
-                // Ngón áp út
                 { indices: FINGER_SEGMENTS.RING, color: ringColor },
-                // Ngón út
                 { indices: FINGER_SEGMENTS.PINKY, color: pinkyColor },
-                // Lòng bàn tay/Cổ tay (luôn giữ màu xám)
                 { indices: FINGER_SEGMENTS.WRIST_PALM, color: PALM_COLOR }
             ];
 
@@ -387,7 +381,6 @@
             landmarks.forEach((p, index) => {
                 let color;
                 
-                // Xác định màu cho điểm mốc dựa trên ngón tay mà nó thuộc về
                 if ([1, 2, 3, 4].includes(index)) { 
                     color = thumbColor;
                 } else if ([5, 6, 7, 8].includes(index)) { 
