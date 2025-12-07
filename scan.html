@@ -212,10 +212,10 @@
                     } else {
                         drawHandLandmarks(landmarks);
                         // Cập nhật thông báo
-                        overlayText.innerHTML = `✋ **Đang kiểm tra bàn tay TRÁI...** <br> Yêu cầu: Giơ (cái, trỏ, giữa), Gập (áp út, út).`;
+                        overlayText.innerHTML = `✋`;
                     }
                 } else {
-                    overlayText.innerHTML = "👋 **YÊU CẦU:** <br> Giơ bàn tay TRÁI vào camera.";
+                    overlayText.innerHTML = "👋";
                 }
 
                 if (!window.isGestureSuccessful) {
@@ -278,10 +278,10 @@
             cancelAnimationFrame(animationFrameId); 
 
             // Cập nhật thông báo sau khi thành công
-            overlayText.innerHTML = "🎉 **QUÉT THÀNH CÔNG!** 🎉";
+            overlayText.innerHTML = "QUÉT THÀNH CÔNG!";
             overlayText.style.backgroundColor = 'rgba(76, 175, 80, 0.9)';
             
-            statusMessage.textContent = "✅ Nhận dạng thành công! Chào mừng đến RvnSkr";
+            statusMessage.textContent = " Nhận dạng thành công! Chào mừng đến RvnSkr";
             statusMessage.classList.remove('status-processing');
             statusMessage.classList.add('status-success');
         }
