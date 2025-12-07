@@ -197,7 +197,7 @@
                         return 0;
                     };
 
-                    // CHUẨN HÓA TỌA ĐỘ: Sử dụng tọa độ 2D (keypoints) để vẽ và chia tỷ lệ 
+                    // CHUẨN HÓA TỌA ĐỘ (ĐÃ SỬA LỖI CO GÓC): Sử dụng tọa độ 2D (keypoints) để vẽ và chia tỷ lệ 
                     // theo kích thước thực của video và kích thước canvas.
                     const landmarks = hand.keypoints.map((p, index) => {
                         return {
@@ -227,42 +227,38 @@
         }
 
         /**
-         * 3. Logic Nhận dạng Cử chỉ Mục tiêu (Sử dụng khoảng cách giữa các khớp)
+         * 3. Logic Nhận dạng Cử chỉ Mục tiêu (Đã cập nhật Ngưỡng)
          */
         function isTargetGesture(hand, landmarks) {
             // 3.1. KIỂM TRA BÀN TAY TRÁI (Handedness)
-            // Mô hình xác định bàn tay TRÁI
             if (hand.handedness !== 'Left') {
                 return false; 
             }
 
             // 3.2. KIỂM TRA TRẠNG THÁI CÁC NGÓN TAY
-            // Ngón tay được coi là giơ ra nếu đầu ngón tay (TIP) xa gốc ngón tay (MCP) hơn một ngưỡng nào đó.
             
             const checkFingerStraight = (tip_index, pip_index, mcp_index) => {
                 const tip = landmarks[tip_index];
                 const pip = landmarks[pip_index];
                 const mcp = landmarks[mcp_index];
 
-                // Khoảng cách từ đầu ngón tay đến khớp MCP (gốc ngón)
                 const dist_tip_mcp = distance(tip, mcp);
-                // Khoảng cách từ khớp PIP (khớp giữa) đến khớp MCP
                 const dist_pip_mcp = distance(pip, mcp);
                 
-                // Ngón tay giơ ra khi TIP xa MCP hơn PIP một khoảng đáng kể (ngón thẳng)
-                // Ngưỡng 1.4 có thể cần tinh chỉnh nếu video/canvas có tỉ lệ khác nhau
+                // Ngưỡng 1.4: Tỷ lệ vẫn giữ nguyên
                 return (dist_tip_mcp / dist_pip_mcp) > 1.4; 
             };
 
             const checkFingerFolded = (tip_index, dip_index, pip_index) => {
-                // Ngón tay gập khi TIP gần DIP (khớp cuối)
                 const dist_tip_dip = distance(landmarks[tip_index], landmarks[dip_index]);
-                // Ngưỡng 30px (Có thể tinh chỉnh sau khi sửa lỗi tọa độ)
-                return dist_tip_dip < 30; 
+                
+                // NGƯỠNG ĐÃ ĐIỀU CHỈNH: Tăng từ 30 lên 45 để dễ xác nhận ngón gập hơn
+                return dist_tip_dip < 45; 
             };
 
-            // Ngón Cái (Khác biệt): Thẳng nếu TIP xa MCP. Ngưỡng 70px.
-            const isThumbUp = distance(landmarks[FINGER_LANDMARKS.THUMB_TIP], landmarks[FINGER_LANDMARKS.THUMB_MCP]) > 70; 
+            // Ngón Cái (Khác biệt): Thẳng nếu TIP xa MCP.
+            // NGƯỠNG ĐÃ ĐIỀU CHỈNH: Giảm từ 70 xuống 60 để dễ xác nhận hơn
+            const isThumbUp = distance(landmarks[FINGER_LANDMARKS.THUMB_TIP], landmarks[FINGER_LANDMARKS.THUMB_MCP]) > 60; 
 
             // Ngón Trỏ, Giữa GIƠ RA
             const isIndexUp = checkFingerStraight(FINGER_LANDMARKS.INDEX_FINGER_TIP, FINGER_LANDMARKS.INDEX_FINGER_PIP, FINGER_LANDMARKS.INDEX_FINGER_MCP);
@@ -273,7 +269,6 @@
             const isPinkyFolded = checkFingerFolded(FINGER_LANDMARKS.PINKY_FINGER_TIP, FINGER_LANDMARKS.PINKY_FINGER_DIP, FINGER_LANDMARKS.PINKY_FINGER_PIP);
             
             // 3.3. KIỂM TRA LÒNG BÀN TAY HƯỚNG VÀO (Thông qua vị trí Z)
-            // Lòng bàn tay hướng vào: Đầu ngón tay (Z nhỏ hơn) gần camera hơn gốc ngón tay (Z lớn hơn).
             const isPalmFacing = landmarks[FINGER_LANDMARKS.INDEX_FINGER_TIP].z < landmarks[FINGER_LANDMARKS.INDEX_FINGER_MCP].z;
 
             // TỔNG HỢP CỬ CHỈ
