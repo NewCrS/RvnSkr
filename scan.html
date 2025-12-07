@@ -211,9 +211,8 @@
                         handleSuccess();
                     } else {
                         drawHandLandmarks(landmarks);
-                        // Cập nhật thông báo để phản ánh sự đảo ngược
-                        const expectedHand = hand.handedness === 'Right' ? 'TRÁI (Đang kiểm tra)' : 'PHẢI (Đang kiểm tra)';
-                        overlayText.innerHTML = `✋ **Đang kiểm tra bàn tay ${expectedHand}...** <br> Yêu cầu: Giơ (cái, trỏ, giữa), Gập (áp út, út).`;
+                        // Cập nhật thông báo
+                        overlayText.innerHTML = `✋ **Đang kiểm tra bàn tay TRÁI...** <br> Yêu cầu: Giơ (cái, trỏ, giữa), Gập (áp út, út).`;
                     }
                 } else {
                     overlayText.innerHTML = "👋 **YÊU CẦU:** <br> Giơ bàn tay TRÁI vào camera.";
@@ -232,7 +231,7 @@
         function isTargetGesture(hand, landmarks) {
             
             // 3.1. KIỂM TRA BÀN TAY TRÁI (Handedness - ĐÃ ĐẢO NGƯỢC LOGIC)
-            // Đã sửa: kiểm tra 'Right' vì camera bị lật
+            // SỬA LỖI: Kiểm tra 'Right' vì camera trước bị lật, tay trái sẽ được mô hình nhận diện là tay phải.
             if (hand.handedness !== 'Right') {
                 return false; 
             }
@@ -254,12 +253,12 @@
             const checkFingerFolded = (tip_index, dip_index, pip_index) => {
                 const dist_tip_dip = distance(landmarks[tip_index], landmarks[dip_index]);
                 
-                // NGƯỠNG ĐÃ ĐIỀU CHỈNH: Giảm từ 65 xuống 40 để yêu cầu ngón tay phải gập rõ ràng
+                // ĐIỀU CHỈNH: Giảm ngưỡng từ 65 xuống 40 để yêu cầu ngón tay phải gập rõ ràng, tránh nhận diện nhầm khi tay mở.
                 return dist_tip_dip < 40; 
             };
 
             // Ngón Cái (Khác biệt): Thẳng nếu TIP xa MCP.
-            // NGƯỠNG ĐÃ ĐIỀU CHỈNH: Tăng từ 50 lên 65 để yêu cầu ngón cái phải duỗi ra
+            // ĐIỀU CHỈNH: Tăng từ 50 lên 65 để yêu cầu ngón cái phải duỗi ra
             const isThumbUp = distance(landmarks[FINGER_LANDMARKS.THUMB_TIP], landmarks[FINGER_LANDMARKS.THUMB_MCP]) > 65; 
 
             // Ngón Trỏ, Giữa GIƠ RA
@@ -278,10 +277,11 @@
             window.isGestureSuccessful = true;
             cancelAnimationFrame(animationFrameId); 
 
-            overlayText.innerHTML = "🎉 **QUÉT THÀNH CÔNG!** 🎉 <br> Cử chỉ bàn tay trái đã được nhận dạng chính xác.";
+            // Cập nhật thông báo sau khi thành công
+            overlayText.innerHTML = "🎉 **QUÉT THÀNH CÔNG!** 🎉";
             overlayText.style.backgroundColor = 'rgba(76, 175, 80, 0.9)';
             
-            statusMessage.textContent = "✅ Cử chỉ bàn tay trái đã được nhận dạng thành công!";
+            statusMessage.textContent = "✅ Nhận dạng thành công! Chào mừng đến RvnSkr";
             statusMessage.classList.remove('status-processing');
             statusMessage.classList.add('status-success');
         }
