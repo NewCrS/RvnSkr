@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kiểm Tra Cử Chỉ Ba Ngón Duỗi, Hai Ngón Gập (Tối Ưu Cuối)</title>
+    <title>Kiểm Tra Cử Chỉ Ba Ngón Duỗi, Hai Ngón Gập (Ngưỡng Cân Bằng)</title>
     
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.13.0/dist/tf.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/hand-pose-detection@2.0.0/dist/hand-pose-detection.min.js"></script>
@@ -239,7 +239,7 @@
 
         /**
          * 3. Logic Nhận dạng Cử chỉ Mục tiêu - Trả về trạng thái từng ngón
-         * Yêu cầu: Trỏ/Giữa/Cái Duỗi/Hơi Khép Sát (Thả lỏng); Áp Út/Út Gập (Ngưỡng 40).
+         * Yêu cầu: Trỏ/Giữa/Cái Duỗi/Hơi Khép Sát (Cân bằng); Áp Út/Út Gập (Ngưỡng 35).
          */
         function getFingerStatus(hand, landmarks) {
             
@@ -262,25 +262,24 @@
 
             const checkFingerFolded = (tip_index, dip_index, pip_index) => {
                 const dist_tip_dip = distance(landmarks[tip_index], landmarks[dip_index]);
-                // ĐIỀU CHỈNH LỚN: Tăng ngưỡng gập lên 40. Điều này giải quyết vấn đề Áp Út/Út không được nhận.
-                return dist_tip_dip < 40; 
+                // ĐIỀU CHỈNH: Siết lại ngưỡng gập về 35. Ngưỡng này chấp nhận trạng thái gập của Áp Út/Út tốt hơn.
+                return dist_tip_dip < 35; 
             };
             
             // 3.3. HÀM KIỂM TRA ĐIỀU KIỆN ĐẶC BIỆT
             
-            // Kiểm tra ngón trỏ và ngón giữa: Cần DUỖI thẳng và hơi KHÉP SÁT (Thả lỏng)
+            // Kiểm tra ngón trỏ và ngón giữa: Cần DUỖI thẳng và hơi KHÉP SÁT (Cân bằng)
             const checkIndexMiddleProximity = () => {
                 const index_mcp = landmarks[FINGER_LANDMARKS.INDEX_FINGER_MCP];
                 const middle_mcp = landmarks[FINGER_LANDMARKS.MIDDLE_FINGER_MCP];
 
                 const dist_mcps = distance(index_mcp, middle_mcp);
                 
-                // ĐIỀU CHỈNH: Nới lỏng kiểm tra Khép sát giữa ngón Trỏ và Giữa (tăng ngưỡng từ 40 lên 55)
-                // Ngưỡng 55 chấp nhận các ngón duỗi thẳng nhưng không cần chạm.
-                return dist_mcps < 55; 
+                // ĐIỀU CHỈNH: Ngưỡng 45 (tăng từ 40, giảm từ 55). Buộc gần nhau hơn một chút.
+                return dist_mcps < 45; 
             };
             
-            // Kiểm tra ngón cái Duỗi và Hơi Khép sát (Thả lỏng)
+            // Kiểm tra ngón cái Duỗi và Hơi Khép sát (Cân bằng)
             const checkThumbAlignment = () => {
                 const thumb_tip = landmarks[FINGER_LANDMARKS.THUMB_TIP];
                 const thumb_mcp = landmarks[FINGER_LANDMARKS.THUMB_MCP];
@@ -289,12 +288,11 @@
                 // 1. Kiểm tra ngón cái duỗi thẳng
                 const isThumbStraight = checkFingerStraight(FINGER_LANDMARKS.THUMB_TIP, FINGER_LANDMARKS.THUMB_IP, FINGER_LANDMARKS.THUMB_MCP);
                 
-                // 2. Kiểm tra ngón cái KHÔNG QUÁ XA ngón trỏ (Thả lỏng)
+                // 2. Kiểm tra ngón cái KHÔNG QUÁ XA ngón trỏ
                 const dist_thumb_index_base = distance(thumb_mcp, index_mcp);
 
-                // ĐIỀU CHỈNH: Nới lỏng ngưỡng Khép sát ngón cái (tăng từ 75 lên 90)
-                // Ngưỡng 90 cho phép ngón cái duỗi nhưng hơi tách ra khỏi ngón trỏ một chút.
-                return isThumbStraight && dist_thumb_index_base < 90; 
+                // ĐIỀU CHỈNH: Ngưỡng 70 (giảm từ 90). Giữ ngón cái ở vị trí duỗi và gần ngón trỏ vừa phải.
+                return isThumbStraight && dist_thumb_index_base < 70; 
             };
 
             // 3.4. TÍNH TOÁN TRẠNG THÁI
@@ -307,7 +305,7 @@
             // Ngón Cái: Yêu cầu DUỖI và HƠI KHÉP SÁT
             const isThumbCorrect = checkThumbAlignment();
             
-            // Ngón Áp Út, Út: Yêu cầu GẬP (ngưỡng 40)
+            // Ngón Áp Út, Út: Yêu cầu GẬP (ngưỡng 35)
             const isRingFolded = checkFingerFolded(FINGER_LANDMARKS.RING_FINGER_TIP, FINGER_LANDMARKS.RING_FINGER_DIP, FINGER_LANDMARKS.RING_FINGER_PIP);
             const isPinkyFolded = checkFingerFolded(FINGER_LANDMARKS.PINKY_FINGER_TIP, FINGER_LANDMARKS.PINKY_FINGER_DIP, FINGER_LANDMARKS.PINKY_FINGER_PIP);
             
