@@ -1,9 +1,10 @@
+</html>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kiểm Tra Cử Chỉ Ba Ngón Duỗi, Hai Ngón Gập (Tối Ưu Ngưỡng)</title>
+    <title>Kiểm Tra Cử Chỉ Ba Ngón Duỗi, Hai Ngón Gập (Tối Ưu Cuối)</title>
     
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.13.0/dist/tf.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/hand-pose-detection@2.0.0/dist/hand-pose-detection.min.js"></script>
@@ -136,6 +137,7 @@
         }
 
         async function setupDetector() {
+            // ... (setupDetector không đổi)
             try {
                 const model = handPoseDetection.SupportedModels.MediaPipeHands;
                 const detectorConfig = {
@@ -162,6 +164,7 @@
         }
 
         async function setupCamera() {
+            // ... (setupCamera không đổi)
             if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
                 const stream = await navigator.mediaDevices.getUserMedia({ video: true });
                 video.srcObject = stream;
@@ -180,10 +183,8 @@
             }
         }
 
-        /**
-         * 2. Vòng lặp Nhận dạng Cử chỉ
-         */
         function startDetectionLoop() {
+            // ... (startDetectionLoop không đổi)
             const detect = async () => {
                 const hands = await detector.estimateHands(video, { flipHorizontal: false }); 
 
@@ -240,11 +241,11 @@
 
         /**
          * 3. Logic Nhận dạng Cử chỉ Mục tiêu - Trả về trạng thái từng ngón
-         * Yêu cầu: Trỏ/Giữa Duỗi/Khép sát; Cái Duỗi/Khép sát; Áp Út/Út Gập.
+         * Yêu cầu MỚI: Trỏ/Giữa/Cái Duỗi (không cần khép sát); Áp Út/Út Gập (ngưỡng nới lỏng).
          */
         function getFingerStatus(hand, landmarks) {
             
-            // 3.1. KIỂM TRA BÀN TAY TRÁI (Handedness)
+            // 3.1. KIỂM TRA BÀN TAY PHẢI (Handedness)
             if (hand.handedness !== 'Right') {
                 return { isCorrectHand: false, allFingersCorrect: false }; 
             }
@@ -257,71 +258,66 @@
                 const pip = landmarks[pip_index];
                 const dist_tip_mcp = distance(tip, mcp);
                 const dist_pip_mcp = distance(pip, mcp);
-                // Ngón duỗi thẳng (Giữ nguyên ngưỡng 1.25)
+                // Ngón duỗi thẳng (Giữ nguyên ngưỡng 1.25 - đây là ngưỡng tỷ lệ đáng tin cậy)
                 return (dist_tip_mcp / dist_pip_mcp) > 1.25; 
             };
 
             const checkFingerFolded = (tip_index, dip_index, pip_index) => {
                 const dist_tip_dip = distance(landmarks[tip_index], landmarks[dip_index]);
-                // ĐIỀU CHỈNH LỚN: Giảm ngưỡng từ 30 xuống 20. Buộc ngón áp út/út phải gập sâu.
-                return dist_tip_dip < 20; 
+                // ĐIỀU CHỈNH: Nới lỏng ngưỡng gập từ 20 lên 30 (hoặc 35). Chấp nhận độ gập tự nhiên khi khép ngón.
+                // Nếu 30 vẫn không nhận, hãy thử 35.
+                return dist_tip_dip < 30; 
             };
             
             // 3.3. HÀM KIỂM TRA ĐIỀU KIỆN ĐẶC BIỆT
             
-            // Kiểm tra ngón trỏ và ngón giữa: Cả TIP và MCP đều phải gần nhau (Khép sát/Song song)
+            // Yêu cầu MỚI: Ngón trỏ và ngón giữa chỉ cần DUỖI thẳng, KHÔNG cần kiểm tra Khép sát chặt chẽ.
             const checkIndexMiddleProximity = () => {
-                const index_tip = landmarks[FINGER_LANDMARKS.INDEX_FINGER_TIP];
-                const middle_tip = landmarks[FINGER_LANDMARKS.MIDDLE_FINGER_TIP];
-                const index_mcp = landmarks[FINGER_LANDMARKS.INDEX_FINGER_MCP];
-                const middle_mcp = landmarks[FINGER_LANDMARKS.MIDDLE_FINGER_MCP];
-
-                const dist_tips = distance(index_tip, middle_tip);
-                const dist_mcps = distance(index_mcp, middle_mcp);
-                
-                // Ngưỡng: TIP cách nhau không quá 60, MCP cách nhau không quá 30. (Giữ nguyên)
-                return dist_tips < 60 && dist_mcps < 30; 
+                // Chúng ta chỉ cần đảm bảo chúng không tách quá xa một cách bất thường.
+                // Trong trường hợp này, ta sẽ tạm thời bỏ qua hàm này (luôn trả về true) 
+                // vì yêu cầu là "gần song song" và không cần "quá khép lại"
+                return true; 
             };
             
-            // Kiểm tra ngón cái Duỗi và Khép sát
+            // Kiểm tra ngón cái Duỗi và KHÔNG cần Khép sát chặt chẽ
             const checkThumbAlignment = () => {
                 const thumb_tip = landmarks[FINGER_LANDMARKS.THUMB_TIP];
                 const thumb_mcp = landmarks[FINGER_LANDMARKS.THUMB_MCP];
-                const index_mcp = landmarks[FINGER_LANDMARKS.INDEX_FINGER_MCP];
-
-                // 1. Kiểm tra ngón cái duỗi thẳng
-                const isThumbStraight = distance(thumb_tip, thumb_mcp) > 65; 
                 
-                // 2. Kiểm tra ngón cái KHÔNG QUÁ XA ngón trỏ (Khép sát)
-                const dist_thumb_index_base = distance(thumb_mcp, index_mcp);
-
-                // Ngưỡng: Phải duỗi và không mở rộng quá mức. Ngưỡng 60 là hợp lý.
-                return isThumbStraight && dist_thumb_index_base < 60; 
+                // 1. Kiểm tra ngón cái duỗi thẳng (sử dụng tỷ lệ để duỗi thẳng)
+                const isThumbStraight = checkFingerStraight(FINGER_LANDMARKS.THUMB_TIP, FINGER_LANDMARKS.THUMB_IP, FINGER_LANDMARKS.THUMB_MCP);
+                
+                // 2. KHÔNG kiểm tra khoảng cách khép sát (loại bỏ dist_thumb_index_base < 60)
+                // Chỉ cần nó duỗi thẳng là đủ.
+                return isThumbStraight;
             };
 
             // 3.4. TÍNH TOÁN TRẠNG THÁI
             
-            // Ngón Trỏ & Giữa: Yêu cầu DUỖI và KHÉP
+            // Ngón Trỏ & Giữa: Yêu cầu DUỖI
             const isIndexUp = checkFingerStraight(FINGER_LANDMARKS.INDEX_FINGER_TIP, FINGER_LANDMARKS.INDEX_FINGER_PIP, FINGER_LANDMARKS.INDEX_FINGER_MCP);
             const isMiddleUp = checkFingerStraight(FINGER_LANDMARKS.MIDDLE_FINGER_TIP, FINGER_LANDMARKS.MIDDLE_FINGER_PIP, FINGER_LANDMARKS.MIDDLE_FINGER_MCP);
-            const isIndexMiddleClosed = checkIndexMiddleProximity();
+            
+            // isIndexMiddleClosed (chỉ kiểm tra duỗi thẳng)
+            const isIndexMiddleClosed = checkIndexMiddleProximity(); 
 
-            // Ngón Cái: Yêu cầu DUỖI và KHÉP
+            // Ngón Cái: Yêu cầu DUỖI (và không cần khép sát)
             const isThumbCorrect = checkThumbAlignment();
             
-            // Ngón Áp Út, Út: Yêu cầu GẬP
+            // Ngón Áp Út, Út: Yêu cầu GẬP (ngưỡng 30)
             const isRingFolded = checkFingerFolded(FINGER_LANDMARKS.RING_FINGER_TIP, FINGER_LANDMARKS.RING_FINGER_DIP, FINGER_LANDMARKS.RING_FINGER_PIP);
             const isPinkyFolded = checkFingerFolded(FINGER_LANDMARKS.PINKY_FINGER_TIP, FINGER_LANDMARKS.PINKY_FINGER_DIP, FINGER_LANDMARKS.PINKY_FINGER_PIP);
             
-            // TỔNG HỢP
+            // TỔNG HỢP: Ngón cái DUỖI AND Trỏ DUỖI AND Giữa DUỖI AND Áp Út GẬP AND Út GẬP
+            // Lưu ý: isIndexMiddleClosed luôn là true, chỉ dùng để giữ cấu trúc.
             const allFingersCorrect = isThumbCorrect && isIndexUp && isMiddleUp && isIndexMiddleClosed && isRingFolded && isPinkyFolded;
 
             return {
                 isCorrectHand: true,
                 allFingersCorrect: allFingersCorrect,
                 thumb: isThumbCorrect, 
-                index: isIndexUp && isIndexMiddleClosed, 
-                middle: isMiddleUp && isIndexMiddleClosed, 
+                index: isIndexUp, // Bỏ isIndexMiddleClosed ở đây
+                middle: isMiddleUp, // Bỏ isIndexMiddleClosed ở đây
                 ring: isRingFolded,
                 pinky: isPinkyFolded
             };
@@ -349,7 +345,8 @@
 
             // Lấy màu cho các ngón tay
             const thumbColor = fingerStatus.thumb ? SUCCESS_COLOR : DEFAULT_COLOR;
-            const indexColor = fingerStatus.index ? SUCCESS_COLOR : DEFAULT_COLOR;
+            // Chỉ kiểm tra Duỗi (isIndexUp/isMiddleUp) chứ không kiểm tra Khép sát
+            const indexColor = fingerStatus.index ? SUCCESS_COLOR : DEFAULT_COLOR; 
             const middleColor = fingerStatus.middle ? SUCCESS_COLOR : DEFAULT_COLOR;
             const ringColor = fingerStatus.ring ? SUCCESS_COLOR : DEFAULT_COLOR;
             const pinkyColor = fingerStatus.pinky ? SUCCESS_COLOR : DEFAULT_COLOR;
