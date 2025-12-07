@@ -115,6 +115,16 @@
             PINKY_MCP: 17, PINKY_FINGER_PIP: 18, PINKY_FINGER_DIP: 19, PINKY_FINGER_TIP: 20
         };
 
+        // Định nghĩa các cặp điểm mốc (bắt đầu, kết thúc) cho từng ngón tay và khớp nối cổ tay
+        const FINGER_SEGMENTS = {
+            WRIST_PALM: [[0, 1], [0, 5], [0, 17], [5, 9], [9, 13], [13, 17]],
+            THUMB: [[1, 2], [2, 3], [3, 4]],
+            INDEX: [[5, 6], [6, 7], [7, 8]],
+            MIDDLE: [[9, 10], [10, 11], [11, 12]],
+            RING: [[13, 14], [14, 15], [15, 16]],
+            PINKY: [[17, 18], [18, 19], [19, 20]]
+        };
+        
         // Hàm giúp tính khoảng cách giữa hai điểm trong không gian 3D
         function distance(p1, p2) {
             return Math.sqrt(
@@ -124,15 +134,11 @@
             );
         }
 
-        /**
-         * 1. Thiết lập Camera và Tải mô hình
-         */
         async function setupDetector() {
             try {
                 const model = handPoseDetection.SupportedModels.MediaPipeHands;
                 const detectorConfig = {
                     runtime: 'mediapipe',
-                    // Sử dụng đường dẫn tuyệt đối cho các tệp nhị phân cần thiết của MediaPipe
                     solutionPath: 'https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1646424915', 
                     modelType: 'full'
                 };
@@ -162,7 +168,6 @@
                 return new Promise((resolve) => {
                     video.onloadedmetadata = () => {
                         video.play();
-                        // Gán kích thước canvas theo kích thước thực của video
                         canvas.width = video.videoWidth;
                         canvas.height = video.videoHeight;
                         startDetectionLoop();
@@ -175,20 +180,17 @@
         }
 
         /**
-         * 2. Vòng lặp Nhận dạng Cử chỉ (Đã sửa lỗi Tọa độ)
+         * 2. Vòng lặp Nhận dạng Cử chỉ
          */
         function startDetectionLoop() {
             const detect = async () => {
-                // flipHorizontal: false vì chúng ta đã lật bằng CSS (transform: scaleX(-1))
                 const hands = await detector.estimateHands(video, { flipHorizontal: false }); 
 
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
 
                 if (hands.length > 0) {
                     const hand = hands[0];
-                    let isCurrentGestureSuccessful = false;
                     
-                    // Hàm tiện ích để tìm tọa độ Z từ keypoints3D
                     const getZCoord = (id) => {
                         if (hand.keypoints3D && hand.keypoints3D[id]) {
                             return hand.keypoints3D[id].z * canvas.width;
@@ -196,7 +198,6 @@
                         return 0;
                     };
 
-                    // CHUẨN HÓA TỌA ĐỘ
                     const landmarks = hand.keypoints.map((p, index) => {
                         return {
                             x: p.x * (canvas.width / video.videoWidth), 
@@ -206,57 +207,52 @@
                         };
                     });
                     
-                    // 3. THỰC HIỆN LOGIC NHẬN DẠNG CỬ CHỈ TRÁI
-                    if (isTargetGesture(hand, landmarks)) {
-                        isCurrentGestureSuccessful = true;
-                        if (!window.isGestureSuccessful) {
-                            handleSuccess();
-                        }
+                    // 3. THỰC HIỆN LOGIC NHẬN DẠNG CỬ CHỈ VÀ LẤY TRẠNG THÁI TỪNG NGÓN
+                    const fingerStatus = getFingerStatus(hand, landmarks);
+                    const isCurrentGestureSuccessful = fingerStatus.allFingersCorrect;
+                    
+                    if (isCurrentGestureSuccessful && !window.isGestureSuccessful) {
+                        handleSuccess();
                     } 
                     
-                    // LUÔN VẼ HITBOX VÀ CHUYỂN MÀU THEO KẾT QUẢ KIỂM TRA
-                    drawHandLandmarks(landmarks, isCurrentGestureSuccessful);
-
+                    // LUÔN VẼ HITBOX VÀ CHUYỂN MÀU THEO TRẠNG THÁI TỪNG NGÓN
+                    drawHandLandmarks(landmarks, fingerStatus);
 
                     // Cập nhật text hiển thị dựa trên trạng thái hiện tại
                     if (!window.isGestureSuccessful) {
-                         // Trạng thái: Đang tìm kiếm (Hitbox sẽ là màu xanh nếu cử chỉ đúng)
                          overlayText.innerHTML = `✋`;
                     } else {
-                         // Trạng thái: Đã thành công
                          overlayText.innerHTML = "QUÉT THÀNH CÔNG!";
                          statusMessage.textContent = " Nhận dạng thành công! Chào mừng đến RvnSkr";
                     }
 
                 } else {
-                    // KHÔI PHỤC TEXT ĐƠN GIẢN khi không có tay
                     if (!window.isGestureSuccessful) {
                          overlayText.innerHTML = "👋";
                     }
                 }
 
-                // KHÔNG TẮT VÒNG LẶP
                 animationFrameId = requestAnimationFrame(detect);
             };
             detect();
         }
 
         /**
-         * 3. Logic Nhận dạng Cử chỉ Mục tiêu
+         * 3. Logic Nhận dạng Cử chỉ Mục tiêu - Trả về trạng thái từng ngón
          */
-        function isTargetGesture(hand, landmarks) {
+        function getFingerStatus(hand, landmarks) {
             
-            // 3.1. KIỂM TRA BÀN TAY TRÁI (Handedness - ĐẢO NGƯỢC LOGIC CHO CAMERA LẬT)
+            // 3.1. KIỂM TRA BÀN TAY TRÁI (Handedness)
             if (hand.handedness !== 'Right') {
-                return false; 
+                return { isCorrectHand: false, allFingersCorrect: false }; 
             }
 
-            // 3.2. KIỂM TRA TRẠNG THÁI CÁC NGÓN TAY 
+            // 3.2. HÀM KIỂM TRA TRẠNG THÁI
             
             const checkFingerStraight = (tip_index, pip_index, mcp_index) => {
                 const tip = landmarks[tip_index];
-                const pip = landmarks[pip_index];
                 const mcp = landmarks[mcp_index];
+                const pip = landmarks[pip_index];
                 const dist_tip_mcp = distance(tip, mcp);
                 const dist_pip_mcp = distance(pip, mcp);
                 return (dist_tip_mcp / dist_pip_mcp) > 1.25; 
@@ -273,13 +269,22 @@
             const isRingFolded = checkFingerFolded(FINGER_LANDMARKS.RING_FINGER_TIP, FINGER_LANDMARKS.RING_FINGER_DIP, FINGER_LANDMARKS.RING_FINGER_PIP);
             const isPinkyFolded = checkFingerFolded(FINGER_LANDMARKS.PINKY_FINGER_TIP, FINGER_LANDMARKS.PINKY_FINGER_DIP, FINGER_LANDMARKS.PINKY_FINGER_PIP);
             
-            return isThumbUp && isIndexUp && isMiddleUp && isRingFolded && isPinkyFolded;
+            const allFingersCorrect = isThumbUp && isIndexUp && isMiddleUp && isRingFolded && isPinkyFolded;
+
+            return {
+                isCorrectHand: true,
+                allFingersCorrect: allFingersCorrect,
+                thumb: isThumbUp,
+                index: isIndexUp,
+                middle: isMiddleUp,
+                ring: isRingFolded,
+                pinky: isPinkyFolded
+            };
         }
 
         function handleSuccess() {
             window.isGestureSuccessful = true;
             
-            // Cập nhật thông báo
             overlayText.innerHTML = "QUÉT THÀNH CÔNG!";
             overlayText.style.backgroundColor = 'rgba(76, 175, 80, 0.9)';
             
@@ -289,33 +294,67 @@
         }
 
         /**
-         * Hàm vẽ hitbox, nhận thêm tham số để đổi màu.
+         * Hàm vẽ hitbox, nhận đối tượng trạng thái ngón tay để đổi màu.
          */
-        function drawHandLandmarks(landmarks, isSuccessful) {
-            const connections = [
-                [0, 1], [1, 2], [2, 3], [3, 4], 
-                [0, 5], [5, 6], [6, 7], [7, 8], 
-                [9, 10], [10, 11], [11, 12], 
-                [13, 14], [14, 15], [15, 16], 
-                [0, 17], [17, 18], [18, 19], [19, 20], 
-                [5, 9], [9, 13], [13, 17] 
-            ];
+        function drawHandLandmarks(landmarks, fingerStatus) {
             
-            // ĐỔI MÀU: Nếu thành công, dùng màu xanh lá. Ngược lại, dùng màu mặc định.
-            ctx.lineWidth = 3; // Tăng độ dày để dễ nhìn
-            ctx.strokeStyle = isSuccessful ? '#4CAF50' : '#32CD32'; // Xanh lá đậm khi thành công, Xanh lá nhạt khi chưa thành công
-            ctx.fillStyle = isSuccessful ? '#00FF00' : '#FF4500'; // Đỏ cam cho điểm mốc khi chưa thành công
+            // Màu mặc định
+            const DEFAULT_COLOR = '#FF4500'; // Đỏ cam
+            // Màu khi đúng
+            const SUCCESS_COLOR = '#4CAF50'; // Xanh lá
+            // Màu nền/lòng bàn tay
+            const PALM_COLOR = '#808080'; // Xám
 
-            connections.forEach(([start, end]) => {
-                const p1 = landmarks[start];
-                const p2 = landmarks[end];
-                ctx.beginPath();
-                ctx.moveTo(p1.x, p1.y);
-                ctx.lineTo(p2.x, p2.y);
-                ctx.stroke();
+            // 1. Vẽ các đoạn kết nối (xương)
+            const segments = [
+                // Ngón cái
+                { indices: FINGER_SEGMENTS.THUMB, color: fingerStatus.thumb ? SUCCESS_COLOR : DEFAULT_COLOR },
+                // Ngón trỏ
+                { indices: FINGER_SEGMENTS.INDEX, color: fingerStatus.index ? SUCCESS_COLOR : DEFAULT_COLOR },
+                // Ngón giữa
+                { indices: FINGER_SEGMENTS.MIDDLE, color: fingerStatus.middle ? SUCCESS_COLOR : DEFAULT_COLOR },
+                // Ngón áp út
+                { indices: FINGER_SEGMENTS.RING, color: fingerStatus.ring ? SUCCESS_COLOR : DEFAULT_COLOR },
+                // Ngón út
+                { indices: FINGER_SEGMENTS.PINKY, color: fingerStatus.pinky ? SUCCESS_COLOR : DEFAULT_COLOR },
+                // Lòng bàn tay/Cổ tay (luôn giữ màu xám)
+                { indices: FINGER_SEGMENTS.WRIST_PALM, color: PALM_COLOR }
+            ];
+
+            ctx.lineWidth = 3; 
+
+            segments.forEach(segment => {
+                ctx.strokeStyle = segment.color;
+                segment.indices.forEach(([start, end]) => {
+                    const p1 = landmarks[start];
+                    const p2 = landmarks[end];
+                    ctx.beginPath();
+                    ctx.moveTo(p1.x, p1.y);
+                    ctx.lineTo(p2.x, p2.y);
+                    ctx.stroke();
+                });
             });
 
-            landmarks.forEach(p => {
+            // 2. Vẽ các điểm mốc (joints)
+            landmarks.forEach((p, index) => {
+                let color;
+                
+                // Xác định màu cho điểm mốc dựa trên ngón tay mà nó thuộc về
+                if ([1, 2, 3, 4].includes(index)) { // Ngón cái
+                    color = fingerStatus.thumb ? SUCCESS_COLOR : DEFAULT_COLOR;
+                } else if ([5, 6, 7, 8].includes(index)) { // Ngón trỏ
+                    color = fingerStatus.index ? SUCCESS_COLOR : DEFAULT_COLOR;
+                } else if ([9, 10, 11, 12].includes(index)) { // Ngón giữa
+                    color = fingerStatus.middle ? SUCCESS_COLOR : DEFAULT_COLOR;
+                } else if ([13, 14, 15, 16].includes(index)) { // Ngón áp út
+                    color = fingerStatus.ring ? SUCCESS_COLOR : DEFAULT_COLOR;
+                } else if ([17, 18, 19, 20].includes(index)) { // Ngón út
+                    color = fingerStatus.pinky ? SUCCESS_COLOR : DEFAULT_COLOR;
+                } else { // Cổ tay, CMC (0) và MCPs (5, 9, 13, 17)
+                    color = PALM_COLOR;
+                }
+
+                ctx.fillStyle = color;
                 ctx.beginPath();
                 ctx.arc(p.x, p.y, 5, 0, 2 * Math.PI); 
                 ctx.fill();
