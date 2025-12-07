@@ -3,13 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kiểm Tra Cử Chỉ Ba Ngón Duỗi, Hai Ngón Gập (GitHub Pages)</title>
+    <title>Kiểm Tra Cử Chỉ Ba Ngón Duỗi, Hai Ngón Gập (Tối Ưu Ngưỡng)</title>
     
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.13.0/dist/tf.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/hand-pose-detection@2.0.0/dist/hand-pose-detection.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1646424915/hands.js"></script> 
     
     <style>
+        /* ... (CSS không đổi) ... */
         body {
             font-family: Arial, sans-serif;
             display: flex;
@@ -256,14 +257,14 @@
                 const pip = landmarks[pip_index];
                 const dist_tip_mcp = distance(tip, mcp);
                 const dist_pip_mcp = distance(pip, mcp);
-                // Ngón duỗi thẳng
+                // Ngón duỗi thẳng (Giữ nguyên ngưỡng 1.25)
                 return (dist_tip_mcp / dist_pip_mcp) > 1.25; 
             };
 
             const checkFingerFolded = (tip_index, dip_index, pip_index) => {
                 const dist_tip_dip = distance(landmarks[tip_index], landmarks[dip_index]);
-                // Ngón gập sâu (Ngưỡng 30)
-                return dist_tip_dip < 30; 
+                // ĐIỀU CHỈNH LỚN: Giảm ngưỡng từ 30 xuống 20. Buộc ngón áp út/út phải gập sâu.
+                return dist_tip_dip < 20; 
             };
             
             // 3.3. HÀM KIỂM TRA ĐIỀU KIỆN ĐẶC BIỆT
@@ -278,7 +279,7 @@
                 const dist_tips = distance(index_tip, middle_tip);
                 const dist_mcps = distance(index_mcp, middle_mcp);
                 
-                // Ngưỡng: TIP cách nhau không quá 60, MCP cách nhau không quá 30.
+                // Ngưỡng: TIP cách nhau không quá 60, MCP cách nhau không quá 30. (Giữ nguyên)
                 return dist_tips < 60 && dist_mcps < 30; 
             };
             
@@ -294,7 +295,7 @@
                 // 2. Kiểm tra ngón cái KHÔNG QUÁ XA ngón trỏ (Khép sát)
                 const dist_thumb_index_base = distance(thumb_mcp, index_mcp);
 
-                // Ngưỡng: Phải duỗi và không mở rộng quá mức. Ngưỡng 60 là hợp lý cho tư thế khép sát.
+                // Ngưỡng: Phải duỗi và không mở rộng quá mức. Ngưỡng 60 là hợp lý.
                 return isThumbStraight && dist_thumb_index_base < 60; 
             };
 
@@ -312,7 +313,7 @@
             const isRingFolded = checkFingerFolded(FINGER_LANDMARKS.RING_FINGER_TIP, FINGER_LANDMARKS.RING_FINGER_DIP, FINGER_LANDMARKS.RING_FINGER_PIP);
             const isPinkyFolded = checkFingerFolded(FINGER_LANDMARKS.PINKY_FINGER_TIP, FINGER_LANDMARKS.PINKY_FINGER_DIP, FINGER_LANDMARKS.PINKY_FINGER_PIP);
             
-            // TỔNG HỢP: Ngón cái DUỖI/KHÉP AND Trỏ DUỖI/KHÉP AND Giữa DUỖI/KHÉP AND Áp Út GẬP AND Út GẬP
+            // TỔNG HỢP
             const allFingersCorrect = isThumbCorrect && isIndexUp && isMiddleUp && isIndexMiddleClosed && isRingFolded && isPinkyFolded;
 
             return {
@@ -338,7 +339,7 @@
         }
 
         /**
-         * Hàm vẽ hitbox, nhận đối tượng trạng thái ngón tay để đổi màu. (Không đổi)
+         * Hàm vẽ hitbox, nhận đối tượng trạng thái ngón tay để đổi màu.
          */
         function drawHandLandmarks(landmarks, fingerStatus) {
             
