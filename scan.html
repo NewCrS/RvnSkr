@@ -1,4 +1,3 @@
-</html>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -213,10 +212,10 @@
                         handleSuccess();
                     } else {
                         drawHandLandmarks(landmarks);
-                        overlayText.innerHTML = `✋ **Đang kiểm tra bàn tay TRÁI...** <br> Yêu cầu: Giơ **${hand.handedness === 'Left' ? 'TRÁI' : 'PHẢI'}** - Giơ (cái, trỏ, giữa), Gập (áp út, út).`;
+                        overlayText.innerHTML = `✋`;
                     }
                 } else {
-                    overlayText.innerHTML = "👋 **YÊU CẦU:** <br> Giơ bàn tay TRÁI vào camera.";
+                    overlayText.innerHTML = "👋";
                 }
 
                 if (!window.isGestureSuccessful) {
@@ -227,7 +226,7 @@
         }
 
         /**
-         * 3. Logic Nhận dạng Cử chỉ Mục tiêu (Đã cập nhật Ngưỡng)
+         * 3. Logic Nhận dạng Cử chỉ Mục tiêu (Đã cập nhật Ngưỡng để RẤT Dễ Vượt qua)
          */
         function isTargetGesture(hand, landmarks) {
             // 3.1. KIỂM TRA BÀN TAY TRÁI (Handedness)
@@ -245,20 +244,20 @@
                 const dist_tip_mcp = distance(tip, mcp);
                 const dist_pip_mcp = distance(pip, mcp);
                 
-                // Ngưỡng 1.4: Tỷ lệ vẫn giữ nguyên
-                return (dist_tip_mcp / dist_pip_mcp) > 1.4; 
+                // NGƯỠNG ĐÃ ĐIỀU CHỈNH: Giảm từ 1.3 xuống 1.25 (Cực kỳ nới lỏng)
+                return (dist_tip_mcp / dist_pip_mcp) > 1.25; 
             };
 
             const checkFingerFolded = (tip_index, dip_index, pip_index) => {
                 const dist_tip_dip = distance(landmarks[tip_index], landmarks[dip_index]);
                 
-                // NGƯỠNG ĐÃ ĐIỀU CHỈNH: Tăng từ 30 lên 45 để dễ xác nhận ngón gập hơn
-                return dist_tip_dip < 45; 
+                // NGƯỠNG ĐÃ ĐIỀU CHỈNH: Tăng từ 55 lên 65 (Cực kỳ nới lỏng)
+                return dist_tip_dip < 65; 
             };
 
             // Ngón Cái (Khác biệt): Thẳng nếu TIP xa MCP.
-            // NGƯỠNG ĐÃ ĐIỀU CHỈNH: Giảm từ 70 xuống 60 để dễ xác nhận hơn
-            const isThumbUp = distance(landmarks[FINGER_LANDMARKS.THUMB_TIP], landmarks[FINGER_LANDMARKS.THUMB_MCP]) > 60; 
+            // NGƯỠNG ĐÃ ĐIỀU CHỈNH: Giảm từ 60 xuống 50
+            const isThumbUp = distance(landmarks[FINGER_LANDMARKS.THUMB_TIP], landmarks[FINGER_LANDMARKS.THUMB_MCP]) > 50; 
 
             // Ngón Trỏ, Giữa GIƠ RA
             const isIndexUp = checkFingerStraight(FINGER_LANDMARKS.INDEX_FINGER_TIP, FINGER_LANDMARKS.INDEX_FINGER_PIP, FINGER_LANDMARKS.INDEX_FINGER_MCP);
@@ -268,21 +267,22 @@
             const isRingFolded = checkFingerFolded(FINGER_LANDMARKS.RING_FINGER_TIP, FINGER_LANDMARKS.RING_FINGER_DIP, FINGER_LANDMARKS.RING_FINGER_PIP);
             const isPinkyFolded = checkFingerFolded(FINGER_LANDMARKS.PINKY_FINGER_TIP, FINGER_LANDMARKS.PINKY_FINGER_DIP, FINGER_LANDMARKS.PINKY_FINGER_PIP);
             
-            // 3.3. KIỂM TRA LÒNG BÀN TAY HƯỚNG VÀO (Thông qua vị trí Z)
+            // LƯU Ý: Điều kiện isPalmFacing (kiểm tra lòng bàn tay hướng vào) đã được tính toán 
+            // nhưng sẽ KHÔNG được dùng trong kết quả cuối cùng để tăng độ ổn định.
             const isPalmFacing = landmarks[FINGER_LANDMARKS.INDEX_FINGER_TIP].z < landmarks[FINGER_LANDMARKS.INDEX_FINGER_MCP].z;
 
-            // TỔNG HỢP CỬ CHỈ
-            return isThumbUp && isIndexUp && isMiddleUp && isRingFolded && isPinkyFolded && isPalmFacing;
+            // TỔNG HỢP CỬ CHỈ (ĐÃ BỎ isPalmFacing)
+            return isThumbUp && isIndexUp && isMiddleUp && isRingFolded && isPinkyFolded;
         }
 
         function handleSuccess() {
             window.isGestureSuccessful = true;
             cancelAnimationFrame(animationFrameId); 
 
-            overlayText.innerHTML = "🎉 **QUÉT THÀNH CÔNG!** 🎉 <br> Cử chỉ bàn tay trái đã được nhận dạng chính xác.";
+            overlayText.innerHTML = " <br> Cử chỉ bàn tay trái đã được nhận dạng chính xác.";
             overlayText.style.backgroundColor = 'rgba(76, 175, 80, 0.9)';
             
-            statusMessage.textContent = "✅ Cử chỉ bàn tay trái đã được nhận dạng thành công!";
+            statusMessage.textContent = "Nhận dạng thành công! /nChào mừng đến RvnSkr";
             statusMessage.classList.remove('status-processing');
             statusMessage.classList.add('status-success');
         }
