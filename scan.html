@@ -211,10 +211,11 @@
                         handleSuccess();
                     } else {
                         drawHandLandmarks(landmarks);
-                        // Cập nhật thông báo
+                        // KHÔI PHỤC TEXT ĐƠN GIẢN:
                         overlayText.innerHTML = `✋`;
                     }
                 } else {
+                    // KHÔI PHỤC TEXT ĐƠN GIẢN:
                     overlayText.innerHTML = "👋";
                 }
 
@@ -253,12 +254,12 @@
             const checkFingerFolded = (tip_index, dip_index, pip_index) => {
                 const dist_tip_dip = distance(landmarks[tip_index], landmarks[dip_index]);
                 
-                // ĐIỀU CHỈNH: Giảm ngưỡng từ 65 xuống 40 để yêu cầu ngón tay phải gập rõ ràng, tránh nhận diện nhầm khi tay mở.
+                // Ngưỡng: 40 (Sửa lỗi nhận diện nhầm khi tay mở)
                 return dist_tip_dip < 40; 
             };
 
             // Ngón Cái (Khác biệt): Thẳng nếu TIP xa MCP.
-            // ĐIỀU CHỈNH: Tăng từ 50 lên 65 để yêu cầu ngón cái phải duỗi ra
+            // Ngưỡng: 65 (Sửa lỗi nhận diện nhầm khi tay mở)
             const isThumbUp = distance(landmarks[FINGER_LANDMARKS.THUMB_TIP], landmarks[FINGER_LANDMARKS.THUMB_MCP]) > 65; 
 
             // Ngón Trỏ, Giữa GIƠ RA
@@ -277,10 +278,11 @@
             window.isGestureSuccessful = true;
             cancelAnimationFrame(animationFrameId); 
 
-            // Cập nhật thông báo sau khi thành công
+            // KHÔI PHỤC TEXT ĐƠN GIẢN:
             overlayText.innerHTML = "QUÉT THÀNH CÔNG!";
             overlayText.style.backgroundColor = 'rgba(76, 175, 80, 0.9)';
             
+            // KHÔI PHỤC TEXT ĐƠN GIẢN:
             statusMessage.textContent = " Nhận dạng thành công! Chào mừng đến RvnSkr";
             statusMessage.classList.remove('status-processing');
             statusMessage.classList.add('status-success');
