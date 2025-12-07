@@ -247,7 +247,7 @@
                 return { isCorrectHand: false, allFingersCorrect: false }; 
             }
 
-            // 3.2. HÀM KIỂM TRA TRẠNG THÁI
+            // 3.2. HÀM KIỂM TRA TRẠNG THÁI CƠ BẢN
             
             const checkFingerStraight = (tip_index, pip_index, mcp_index) => {
                 const tip = landmarks[tip_index];
@@ -255,28 +255,72 @@
                 const pip = landmarks[pip_index];
                 const dist_tip_mcp = distance(tip, mcp);
                 const dist_pip_mcp = distance(pip, mcp);
+                // Phải duỗi thẳng
                 return (dist_tip_mcp / dist_pip_mcp) > 1.25; 
             };
 
             const checkFingerFolded = (tip_index, dip_index, pip_index) => {
                 const dist_tip_dip = distance(landmarks[tip_index], landmarks[dip_index]);
+                // Phải gập rõ ràng
                 return dist_tip_dip < 40; 
             };
+            
+            // 3.3. HÀM KIỂM TRA ĐIỀU KIỆN MỚI (Song song và Khép sát)
+            
+            // Kiểm tra ngón trỏ và ngón giữa: Cả TIP và MCP đều phải gần nhau
+            const checkIndexMiddleProximity = () => {
+                const index_tip = landmarks[FINGER_LANDMARKS.INDEX_FINGER_TIP];
+                const middle_tip = landmarks[FINGER_LANDMARKS.MIDDLE_FINGER_TIP];
+                const index_mcp = landmarks[FINGER_LANDMARKS.INDEX_FINGER_MCP];
+                const middle_mcp = landmarks[FINGER_LANDMARKS.MIDDLE_FINGER_MCP];
 
-            const isThumbUp = distance(landmarks[FINGER_LANDMARKS.THUMB_TIP], landmarks[FINGER_LANDMARKS.THUMB_MCP]) > 65; 
+                const dist_tips = distance(index_tip, middle_tip);
+                const dist_mcps = distance(index_mcp, middle_mcp);
+                
+                // Ngưỡng: TIP cách nhau không quá 40, MCP cách nhau không quá 20
+                return dist_tips < 40 && dist_mcps < 20; 
+            };
+
+            // Kiểm tra ngón cái và ngón trỏ: Phải duỗi và khép vào ngón trỏ (song song)
+            const checkThumbIndexAlignment = () => {
+                const thumb_tip = landmarks[FINGER_LANDMARKS.THUMB_TIP];
+                const thumb_mcp = landmarks[FINGER_LANDMARKS.THUMB_MCP];
+                const index_mcp = landmarks[FINGER_LANDMARKS.INDEX_FINGER_MCP];
+                const index_cmc = landmarks[FINGER_LANDMARKS.WRIST]; // Sử dụng WRIST làm điểm gốc
+                
+                // 1. Kiểm tra ngón cái duỗi thẳng (như cũ)
+                const isThumbStraight = distance(thumb_tip, thumb_mcp) > 65; 
+                
+                // 2. Kiểm tra ngón cái KHÔNG QUÁ XA ngón trỏ (duỗi và khép)
+                // Khoảng cách giữa THUMB_CMC và INDEX_MCP phải nhỏ
+                const dist_thumb_index_base = distance(thumb_mcp, index_mcp);
+
+                // Ngưỡng: Phải duỗi và không mở rộng quá mức (vd: "like" button)
+                return isThumbStraight && dist_thumb_index_base < 50; 
+            };
+
+            // 3.4. TÍNH TOÁN TRẠNG THÁI
+            
+            // Các ngón cần DUỖI và KHÉP SÁT
             const isIndexUp = checkFingerStraight(FINGER_LANDMARKS.INDEX_FINGER_TIP, FINGER_LANDMARKS.INDEX_FINGER_PIP, FINGER_LANDMARKS.INDEX_FINGER_MCP);
             const isMiddleUp = checkFingerStraight(FINGER_LANDMARKS.MIDDLE_FINGER_TIP, FINGER_LANDMARKS.MIDDLE_FINGER_PIP, FINGER_LANDMARKS.MIDDLE_FINGER_MCP);
+            const isIndexMiddleClosed = checkIndexMiddleProximity();
+
+            // Ngón cái cần DUỖI và KHÉP SÁT
+            const isThumbCorrect = checkThumbIndexAlignment();
+            
+            // Các ngón cần GẬP
             const isRingFolded = checkFingerFolded(FINGER_LANDMARKS.RING_FINGER_TIP, FINGER_LANDMARKS.RING_FINGER_DIP, FINGER_LANDMARKS.RING_FINGER_PIP);
             const isPinkyFolded = checkFingerFolded(FINGER_LANDMARKS.PINKY_FINGER_TIP, FINGER_LANDMARKS.PINKY_FINGER_DIP, FINGER_LANDMARKS.PINKY_FINGER_PIP);
             
-            const allFingersCorrect = isThumbUp && isIndexUp && isMiddleUp && isRingFolded && isPinkyFolded;
+            const allFingersCorrect = isThumbCorrect && isIndexUp && isMiddleUp && isIndexMiddleClosed && isRingFolded && isPinkyFolded;
 
             return {
                 isCorrectHand: true,
                 allFingersCorrect: allFingersCorrect,
-                thumb: isThumbUp,
-                index: isIndexUp,
-                middle: isMiddleUp,
+                thumb: isThumbCorrect, // Bao gồm cả duỗi thẳng và khép sát
+                index: isIndexUp && isIndexMiddleClosed, // Index phải duỗi và khép
+                middle: isMiddleUp && isIndexMiddleClosed, // Middle phải duỗi và khép
                 ring: isRingFolded,
                 pinky: isPinkyFolded
             };
@@ -298,25 +342,29 @@
          */
         function drawHandLandmarks(landmarks, fingerStatus) {
             
-            // Màu mặc định
-            const DEFAULT_COLOR = '#FF4500'; // Đỏ cam
-            // Màu khi đúng
-            const SUCCESS_COLOR = '#4CAF50'; // Xanh lá
-            // Màu nền/lòng bàn tay
-            const PALM_COLOR = '#808080'; // Xám
+            const DEFAULT_COLOR = '#FF4500'; // Đỏ cam (Chưa đúng)
+            const SUCCESS_COLOR = '#4CAF50'; // Xanh lá (Đã đúng)
+            const PALM_COLOR = '#808080'; // Xám (Lòng bàn tay)
+
+            // Lấy màu cho các ngón tay
+            const thumbColor = fingerStatus.thumb ? SUCCESS_COLOR : DEFAULT_COLOR;
+            const indexColor = fingerStatus.index ? SUCCESS_COLOR : DEFAULT_COLOR;
+            const middleColor = fingerStatus.middle ? SUCCESS_COLOR : DEFAULT_COLOR;
+            const ringColor = fingerStatus.ring ? SUCCESS_COLOR : DEFAULT_COLOR;
+            const pinkyColor = fingerStatus.pinky ? SUCCESS_COLOR : DEFAULT_COLOR;
 
             // 1. Vẽ các đoạn kết nối (xương)
             const segments = [
                 // Ngón cái
-                { indices: FINGER_SEGMENTS.THUMB, color: fingerStatus.thumb ? SUCCESS_COLOR : DEFAULT_COLOR },
+                { indices: FINGER_SEGMENTS.THUMB, color: thumbColor },
                 // Ngón trỏ
-                { indices: FINGER_SEGMENTS.INDEX, color: fingerStatus.index ? SUCCESS_COLOR : DEFAULT_COLOR },
+                { indices: FINGER_SEGMENTS.INDEX, color: indexColor },
                 // Ngón giữa
-                { indices: FINGER_SEGMENTS.MIDDLE, color: fingerStatus.middle ? SUCCESS_COLOR : DEFAULT_COLOR },
+                { indices: FINGER_SEGMENTS.MIDDLE, color: middleColor },
                 // Ngón áp út
-                { indices: FINGER_SEGMENTS.RING, color: fingerStatus.ring ? SUCCESS_COLOR : DEFAULT_COLOR },
+                { indices: FINGER_SEGMENTS.RING, color: ringColor },
                 // Ngón út
-                { indices: FINGER_SEGMENTS.PINKY, color: fingerStatus.pinky ? SUCCESS_COLOR : DEFAULT_COLOR },
+                { indices: FINGER_SEGMENTS.PINKY, color: pinkyColor },
                 // Lòng bàn tay/Cổ tay (luôn giữ màu xám)
                 { indices: FINGER_SEGMENTS.WRIST_PALM, color: PALM_COLOR }
             ];
@@ -340,17 +388,17 @@
                 let color;
                 
                 // Xác định màu cho điểm mốc dựa trên ngón tay mà nó thuộc về
-                if ([1, 2, 3, 4].includes(index)) { // Ngón cái
-                    color = fingerStatus.thumb ? SUCCESS_COLOR : DEFAULT_COLOR;
-                } else if ([5, 6, 7, 8].includes(index)) { // Ngón trỏ
-                    color = fingerStatus.index ? SUCCESS_COLOR : DEFAULT_COLOR;
-                } else if ([9, 10, 11, 12].includes(index)) { // Ngón giữa
-                    color = fingerStatus.middle ? SUCCESS_COLOR : DEFAULT_COLOR;
-                } else if ([13, 14, 15, 16].includes(index)) { // Ngón áp út
-                    color = fingerStatus.ring ? SUCCESS_COLOR : DEFAULT_COLOR;
-                } else if ([17, 18, 19, 20].includes(index)) { // Ngón út
-                    color = fingerStatus.pinky ? SUCCESS_COLOR : DEFAULT_COLOR;
-                } else { // Cổ tay, CMC (0) và MCPs (5, 9, 13, 17)
+                if ([1, 2, 3, 4].includes(index)) { 
+                    color = thumbColor;
+                } else if ([5, 6, 7, 8].includes(index)) { 
+                    color = indexColor;
+                } else if ([9, 10, 11, 12].includes(index)) { 
+                    color = middleColor;
+                } else if ([13, 14, 15, 16].includes(index)) { 
+                    color = ringColor;
+                } else if ([17, 18, 19, 20].includes(index)) { 
+                    color = pinkyColor;
+                } else { 
                     color = PALM_COLOR;
                 }
 
