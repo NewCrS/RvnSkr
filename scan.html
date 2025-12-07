@@ -186,11 +186,11 @@
 
                 if (hands.length > 0) {
                     const hand = hands[0];
+                    let isCurrentGestureSuccessful = false;
                     
                     // Hàm tiện ích để tìm tọa độ Z từ keypoints3D
                     const getZCoord = (id) => {
                         if (hand.keypoints3D && hand.keypoints3D[id]) {
-                            // keypoints3D.z là tọa độ chuẩn hóa. Nhân với chiều rộng canvas để có giá trị tương đối.
                             return hand.keypoints3D[id].z * canvas.width;
                         }
                         return 0;
@@ -201,38 +201,52 @@
                         return {
                             x: p.x * (canvas.width / video.videoWidth), 
                             y: p.y * (canvas.height / video.videoHeight), 
-                            z: getZCoord(index), // Lấy tọa độ Z
+                            z: getZCoord(index), 
                             name: p.name
                         };
                     });
-
+                    
                     // 3. THỰC HIỆN LOGIC NHẬN DẠNG CỬ CHỈ TRÁI
                     if (isTargetGesture(hand, landmarks)) {
-                        handleSuccess();
+                        isCurrentGestureSuccessful = true;
+                        if (!window.isGestureSuccessful) {
+                            handleSuccess();
+                        }
+                    } 
+                    
+                    // LUÔN VẼ HITBOX VÀ CHUYỂN MÀU THEO KẾT QUẢ KIỂM TRA
+                    drawHandLandmarks(landmarks, isCurrentGestureSuccessful);
+
+
+                    // Cập nhật text hiển thị dựa trên trạng thái hiện tại
+                    if (!window.isGestureSuccessful) {
+                         // Trạng thái: Đang tìm kiếm (Hitbox sẽ là màu xanh nếu cử chỉ đúng)
+                         overlayText.innerHTML = `✋`;
                     } else {
-                        drawHandLandmarks(landmarks);
-                        // KHÔI PHỤC TEXT ĐƠN GIẢN:
-                        overlayText.innerHTML = `✋`;
+                         // Trạng thái: Đã thành công
+                         overlayText.innerHTML = "QUÉT THÀNH CÔNG!";
+                         statusMessage.textContent = " Nhận dạng thành công! Chào mừng đến RvnSkr";
                     }
+
                 } else {
-                    // KHÔI PHỤC TEXT ĐƠN GIẢN:
-                    overlayText.innerHTML = "👋";
+                    // KHÔI PHỤC TEXT ĐƠN GIẢN khi không có tay
+                    if (!window.isGestureSuccessful) {
+                         overlayText.innerHTML = "👋";
+                    }
                 }
 
-                if (!window.isGestureSuccessful) {
-                    animationFrameId = requestAnimationFrame(detect);
-                }
+                // KHÔNG TẮT VÒNG LẶP
+                animationFrameId = requestAnimationFrame(detect);
             };
             detect();
         }
 
         /**
-         * 3. Logic Nhận dạng Cử chỉ Mục tiêu (Đã cập nhật Ngưỡng và Sửa lỗi Lật Camera)
+         * 3. Logic Nhận dạng Cử chỉ Mục tiêu
          */
         function isTargetGesture(hand, landmarks) {
             
-            // 3.1. KIỂM TRA BÀN TAY TRÁI (Handedness - ĐÃ ĐẢO NGƯỢC LOGIC)
-            // SỬA LỖI: Kiểm tra 'Right' vì camera trước bị lật, tay trái sẽ được mô hình nhận diện là tay phải.
+            // 3.1. KIỂM TRA BÀN TAY TRÁI (Handedness - ĐẢO NGƯỢC LOGIC CHO CAMERA LẬT)
             if (hand.handedness !== 'Right') {
                 return false; 
             }
@@ -243,52 +257,41 @@
                 const tip = landmarks[tip_index];
                 const pip = landmarks[pip_index];
                 const mcp = landmarks[mcp_index];
-
                 const dist_tip_mcp = distance(tip, mcp);
                 const dist_pip_mcp = distance(pip, mcp);
-                
-                // Ngưỡng: 1.25 (Giữ nới lỏng cho ngón thẳng)
                 return (dist_tip_mcp / dist_pip_mcp) > 1.25; 
             };
 
             const checkFingerFolded = (tip_index, dip_index, pip_index) => {
                 const dist_tip_dip = distance(landmarks[tip_index], landmarks[dip_index]);
-                
-                // Ngưỡng: 40 (Sửa lỗi nhận diện nhầm khi tay mở)
                 return dist_tip_dip < 40; 
             };
 
-            // Ngón Cái (Khác biệt): Thẳng nếu TIP xa MCP.
-            // Ngưỡng: 65 (Sửa lỗi nhận diện nhầm khi tay mở)
             const isThumbUp = distance(landmarks[FINGER_LANDMARKS.THUMB_TIP], landmarks[FINGER_LANDMARKS.THUMB_MCP]) > 65; 
-
-            // Ngón Trỏ, Giữa GIƠ RA
             const isIndexUp = checkFingerStraight(FINGER_LANDMARKS.INDEX_FINGER_TIP, FINGER_LANDMARKS.INDEX_FINGER_PIP, FINGER_LANDMARKS.INDEX_FINGER_MCP);
             const isMiddleUp = checkFingerStraight(FINGER_LANDMARKS.MIDDLE_FINGER_TIP, FINGER_LANDMARKS.MIDDLE_FINGER_PIP, FINGER_LANDMARKS.MIDDLE_FINGER_MCP);
-
-            // Ngón Áp Út, Út GẬP LẠI
             const isRingFolded = checkFingerFolded(FINGER_LANDMARKS.RING_FINGER_TIP, FINGER_LANDMARKS.RING_FINGER_DIP, FINGER_LANDMARKS.RING_FINGER_PIP);
             const isPinkyFolded = checkFingerFolded(FINGER_LANDMARKS.PINKY_FINGER_TIP, FINGER_LANDMARKS.PINKY_FINGER_DIP, FINGER_LANDMARKS.PINKY_FINGER_PIP);
             
-            // TỔNG HỢP CỬ CHỈ (Đã bỏ isPalmFacing)
             return isThumbUp && isIndexUp && isMiddleUp && isRingFolded && isPinkyFolded;
         }
 
         function handleSuccess() {
             window.isGestureSuccessful = true;
-            cancelAnimationFrame(animationFrameId); 
-
-            // KHÔI PHỤC TEXT ĐƠN GIẢN:
+            
+            // Cập nhật thông báo
             overlayText.innerHTML = "QUÉT THÀNH CÔNG!";
             overlayText.style.backgroundColor = 'rgba(76, 175, 80, 0.9)';
             
-            // KHÔI PHỤC TEXT ĐƠN GIẢN:
             statusMessage.textContent = " Nhận dạng thành công! Chào mừng đến RvnSkr";
             statusMessage.classList.remove('status-processing');
             statusMessage.classList.add('status-success');
         }
 
-        function drawHandLandmarks(landmarks) {
+        /**
+         * Hàm vẽ hitbox, nhận thêm tham số để đổi màu.
+         */
+        function drawHandLandmarks(landmarks, isSuccessful) {
             const connections = [
                 [0, 1], [1, 2], [2, 3], [3, 4], 
                 [0, 5], [5, 6], [6, 7], [7, 8], 
@@ -297,10 +300,11 @@
                 [0, 17], [17, 18], [18, 19], [19, 20], 
                 [5, 9], [9, 13], [13, 17] 
             ];
-
-            ctx.lineWidth = 2;
-            ctx.strokeStyle = '#32CD32'; 
-            ctx.fillStyle = '#FF4500'; 
+            
+            // ĐỔI MÀU: Nếu thành công, dùng màu xanh lá. Ngược lại, dùng màu mặc định.
+            ctx.lineWidth = 3; // Tăng độ dày để dễ nhìn
+            ctx.strokeStyle = isSuccessful ? '#4CAF50' : '#32CD32'; // Xanh lá đậm khi thành công, Xanh lá nhạt khi chưa thành công
+            ctx.fillStyle = isSuccessful ? '#00FF00' : '#FF4500'; // Đỏ cam cho điểm mốc khi chưa thành công
 
             connections.forEach(([start, end]) => {
                 const p1 = landmarks[start];
