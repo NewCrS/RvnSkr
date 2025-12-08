@@ -1,4 +1,5 @@
-<!DOCTYPE html>
+</body>
+</html><!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
@@ -35,14 +36,15 @@
             width: 100%;
             height: auto;
             display: block;
-            transform: scaleX(-1); 
+            transform: scaleX(-1); /* Lật ngang video */
         }
         #canvas-output {
             position: absolute;
             top: 0;
             left: 0;
             pointer-events: none;
-            transform: scaleX(-1); 
+            /* ẨN CANVAS để xóa Hitbox */
+            opacity: 0; 
         }
         #overlay-text {
             position: absolute;
@@ -216,8 +218,7 @@
                         handleSuccess();
                     } 
                     
-                    // LUÔN VẼ HITBOX VÀ CHUYỂN MÀU THEO TRẠNG THÁI TỪNG NGÓN
-                    drawHandLandmarks(landmarks, fingerStatus);
+                    // !!! ĐÃ XÓA LỆNH drawHandLandmarks(landmarks, fingerStatus); !!!
 
                     // Cập nhật text hiển thị dựa trên trạng thái hiện tại
                     if (!window.isGestureSuccessful) {
@@ -336,68 +337,10 @@
         }
 
         /**
-         * Hàm vẽ hitbox, nhận đối tượng trạng thái ngón tay để đổi màu.
+         * Hàm vẽ hitbox, nhận đối tượng trạng thái ngón tay để đổi màu. (Đã bị loại bỏ)
          */
         function drawHandLandmarks(landmarks, fingerStatus) {
-            
-            const DEFAULT_COLOR = '#FF4500'; // Đỏ cam (Chưa đúng)
-            const SUCCESS_COLOR = '#4CAF50'; // Xanh lá (Đã đúng)
-            const PALM_COLOR = '#808080'; // Xám (Lòng bàn tay)
-
-            // Lấy màu cho các ngón tay
-            const thumbColor = fingerStatus.thumb ? SUCCESS_COLOR : DEFAULT_COLOR;
-            const indexColor = fingerStatus.index ? SUCCESS_COLOR : DEFAULT_COLOR;
-            const middleColor = fingerStatus.middle ? SUCCESS_COLOR : DEFAULT_COLOR;
-            const ringColor = fingerStatus.ring ? SUCCESS_COLOR : DEFAULT_COLOR;
-            const pinkyColor = fingerStatus.pinky ? SUCCESS_COLOR : DEFAULT_COLOR;
-
-            // 1. Vẽ các đoạn kết nối (xương)
-            const segments = [
-                { indices: FINGER_SEGMENTS.THUMB, color: thumbColor },
-                { indices: FINGER_SEGMENTS.INDEX, color: indexColor },
-                { indices: FINGER_SEGMENTS.MIDDLE, color: middleColor },
-                { indices: FINGER_SEGMENTS.RING, color: ringColor },
-                { indices: FINGER_SEGMENTS.PINKY, color: pinkyColor },
-                { indices: FINGER_SEGMENTS.WRIST_PALM, color: PALM_COLOR }
-            ];
-
-            ctx.lineWidth = 3; 
-
-            segments.forEach(segment => {
-                ctx.strokeStyle = segment.color;
-                segment.indices.forEach(([start, end]) => {
-                    const p1 = landmarks[start];
-                    const p2 = landmarks[end];
-                    ctx.beginPath();
-                    ctx.moveTo(p1.x, p1.y);
-                    ctx.lineTo(p2.x, p2.y);
-                    ctx.stroke();
-                });
-            });
-
-            // 2. Vẽ các điểm mốc (joints)
-            landmarks.forEach((p, index) => {
-                let color;
-                
-                if ([1, 2, 3, 4].includes(index)) { 
-                    color = thumbColor;
-                } else if ([5, 6, 7, 8].includes(index)) { 
-                    color = indexColor;
-                } else if ([9, 10, 11, 12].includes(index)) { 
-                    color = middleColor;
-                } else if ([13, 14, 15, 16].includes(index)) { 
-                    color = ringColor;
-                } else if ([17, 18, 19, 20].includes(index)) { 
-                    color = pinkyColor;
-                } else { 
-                    color = PALM_COLOR;
-                }
-
-                ctx.fillStyle = color;
-                ctx.beginPath();
-                ctx.arc(p.x, p.y, 5, 0, 2 * Math.PI); 
-                ctx.fill();
-            });
+            // Hàm này hiện không được gọi trong startDetectionLoop()
         }
 
         // Khởi động ứng dụng
