@@ -1,4 +1,3 @@
-</html>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -11,7 +10,6 @@
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1646424915/hands.js"></script> 
     
     <style>
-        /* CSS KHÔNG THAY ĐỔI NHIỀU: Đảm bảo bố cục cơ bản và thích ứng chiều rộng */
         body {
             font-family: Arial, sans-serif;
             display: flex;
@@ -33,10 +31,9 @@
             overflow: hidden;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
         }
-        /* QUAN TRỌNG: Video chiếm 100% chiều rộng, chiều cao tự động theo tỷ lệ gốc */
         #video-feed, #canvas-output {
             width: 100%;
-            height: auto; 
+            height: auto;
             display: block;
             transform: scaleX(-1); /* Lật ngang để tạo cảm giác như gương */
         }
@@ -163,52 +160,16 @@
             }
         }
 
-        /**
-         * HÀM MỚI: Cập nhật kích thước Canvas theo kích thước hiển thị của Video
-         */
-        function updateCanvasDimensions() {
-            // Lấy kích thước thực tế của phần tử video trên màn hình (đã được CSS điều chỉnh)
-            const videoDisplayWidth = video.clientWidth;
-            const videoDisplayHeight = video.clientHeight;
-
-            // Thiết lập kích thước canvas bằng kích thước hiển thị của video
-            canvas.width = videoDisplayWidth;
-            canvas.height = videoDisplayHeight;
-
-            // Đảm bảo canvas được đặt đúng vị trí và kích thước
-            canvas.style.width = `${videoDisplayWidth}px`;
-            canvas.style.height = `${videoDisplayHeight}px`;
-
-            console.log(`Canvas updated: ${canvas.width}x${canvas.height}`);
-        }
-
-
         async function setupCamera() {
             if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-                
-                // Yêu cầu camera với chế độ xem ngang mặc định (tỷ lệ 16:9)
-                const constraints = { 
-                    video: { 
-                        facingMode: 'user' ,
-                        // Cấu hình lý tưởng để đảm bảo chất lượng và tỷ lệ hợp lý (ví dụ: 1280x720)
-                        width: { ideal: 1280 }, 
-                        height: { ideal: 720 }
-                    } 
-                };
-
-                const stream = await navigator.mediaDevices.getUserMedia(constraints);
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
                 video.srcObject = stream;
 
                 return new Promise((resolve) => {
                     video.onloadedmetadata = () => {
                         video.play();
-                        
-                        // QUAN TRỌNG 1: Thiết lập lại kích thước canvas ban đầu sau khi video tải metadata
-                        updateCanvasDimensions();
-                        
-                        // Lắng nghe sự kiện thay đổi kích thước/hướng màn hình
-                        window.addEventListener('resize', updateCanvasDimensions);
-                        
+                        canvas.width = video.videoWidth;
+                        canvas.height = video.videoHeight;
                         startDetectionLoop();
                         resolve(true);
                     };
@@ -226,35 +187,27 @@
                 const hands = await detector.estimateHands(video, { flipHorizontal: false }); 
 
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
-                
-                // Tính toán tỷ lệ chuyển đổi từ kích thước video gốc sang kích thước hiển thị của canvas
-                const ratioX = canvas.width / video.videoWidth;
-                const ratioY = canvas.height / video.videoHeight;
 
                 if (hands.length > 0) {
                     const hand = hands[0];
                     
                     const getZCoord = (id) => {
                         if (hand.keypoints3D && hand.keypoints3D[id]) {
-                            // Dùng chiều rộng video gốc để tính z-coordinate tương đối
-                            return hand.keypoints3D[id].z * video.videoWidth; 
+                            return hand.keypoints3D[id].z * canvas.width;
                         }
                         return 0;
                     };
 
                     const landmarks = hand.keypoints.map((p, index) => {
                         return {
-                            // QUAN TRỌNG 2: Áp dụng tỷ lệ chuyển đổi cho tọa độ x và y
-                            // P.x, p.y là tọa độ chuẩn hóa theo kích thước video gốc (video.videoWidth/Height)
-                            x: p.x * ratioX, 
-                            y: p.y * ratioY, 
+                            x: p.x * (canvas.width / video.videoWidth), 
+                            y: p.y * (canvas.height / video.videoHeight), 
                             z: getZCoord(index), 
                             name: p.name
                         };
                     });
-
+                    
                     // 3. THỰC HIỆN LOGIC NHẬN DẠNG CỬ CHỈ VÀ LẤY TRẠNG THÁI TỪNG NGÓN
-                    // Lưu ý: Cần lật ngang tọa độ hiển thị trong hàm drawHandLandmarks nếu muốn hiệu ứng "gương"
                     const fingerStatus = getFingerStatus(hand, landmarks);
                     const isCurrentGestureSuccessful = fingerStatus.allFingersCorrect;
                     
@@ -283,8 +236,6 @@
             };
             detect();
         }
-        
-        // ... (Giữ nguyên các hàm checkFingerStraight, checkFingerFolded, checkIndexMiddleProximity, checkThumbAlignment, getFingerStatus, handleSuccess) ...
 
         /**
          * 3. Logic Nhận dạng Cử chỉ Mục tiêu - Trả về trạng thái từng ngón
@@ -416,14 +367,9 @@
                 segment.indices.forEach(([start, end]) => {
                     const p1 = landmarks[start];
                     const p2 = landmarks[end];
-                    
-                    // QUAN TRỌNG 3: Áp dụng lật ngang (Mirror Effect) trong khi vẽ
-                    const flipX1 = canvas.width - p1.x; 
-                    const flipX2 = canvas.width - p2.x; 
-
                     ctx.beginPath();
-                    ctx.moveTo(flipX1, p1.y);
-                    ctx.lineTo(flipX2, p2.y);
+                    ctx.moveTo(p1.x, p1.y);
+                    ctx.lineTo(p2.x, p2.y);
                     ctx.stroke();
                 });
             });
@@ -445,13 +391,10 @@
                 } else { 
                     color = PALM_COLOR;
                 }
-                
-                // QUAN TRỌNG 4: Áp dụng lật ngang (Mirror Effect) cho các điểm
-                const flipX = canvas.width - p.x;
 
                 ctx.fillStyle = color;
                 ctx.beginPath();
-                ctx.arc(flipX, p.y, 5, 0, 2 * Math.PI); 
+                ctx.arc(p.x, p.y, 5, 0, 2 * Math.PI); 
                 ctx.fill();
             });
         }
