@@ -16,38 +16,120 @@
     </style>
 </head>
 <body>
-    <h1>[PROCESSING REDIRECTION...]</h1>
-    <script>
-        const params = new URLSearchParams(window.location.search);
-        // Lấy thông tin công khai
-        const id = params.get('id');
-        const target = params.get('target');
+<h1>[PROCESSING REDIRECTION...]</h1>
+
+<script>
+    // =========================================================
+    // ✅ BƯỚC 1: KHAI BÁO TẤT CẢ CÁC ID BÍ MẬT TẠI ĐÂY
+    // Thêm custom ID bằng cách thêm một cặp 'MÃ_ĐỊNH_DANH': { dữ liệu... }
+    // =========================================================
+    const SECRET_PROFILES = {
+        // ID BÍ MẬT ĐẦU TIÊN (Ví dụ cũ)
+        "12072008": {
+            intro: "🔥 Crush 🔥",
+            info: `
+                Had crush on her since 2022.
+            `,
+            image: "crush.png" // Đảm bảo URL ảnh đúng
+        },
         
-        // Lấy thông tin bí mật từ sessionStorage (đã lưu ở bước 1)
-        const popupType = sessionStorage.getItem('tempPopupType');
-
-        if (id && target && popupType) {
-            // 1. Lưu lại loại Popup và Token Xác nhận vào sessionStorage
-            sessionStorage.setItem('secretPopupKey', popupType); 
-            sessionStorage.setItem('isForwarded', 'true');
-
-            // 2. Xóa giá trị tạm thời
-            sessionStorage.removeItem('tempPopupType');
-
-            // 3. Tạo URL chuyển hướng ngược lại trang gốc
-            // Chúng ta chỉ truyền finalTarget qua URL.
-            // Nếu bạn muốn URL sạch 100% không có bất kỳ tham số nào, hãy dùng: const finalURL = `/`;
-            const finalURL = `?finalTarget=${encodeURIComponent(target)}`; 
-            
-            // Thực hiện chuyển hướng ngược lại trang gốc
-            window.location.replace(finalURL);
-            
-        } else {
-            // Trường hợp lỗi hoặc truy cập trực tiếp
-const finalURL = `./?finalTarget=${encodeURIComponent(target)}`;
-window.location.replace(finalURL);
+        // ID BÍ MẬT THỨ HAI (Ví dụ mới, bạn chỉ cần thay đổi nội dung này)
+        "ADMIN_999": {
+            intro: "👑 TRUY CẬP ĐẦY ĐỦ - OVERRIDE 👑",
+            info: `
+                Quyền truy cập hệ thống đã được cấp.<br>
+                Mã định danh: ADMIN_999.<br>
+                **TRẠNG THÁI:** TẤT CẢ MODULE ONLINE.
+            `,
+            image: "assets/admin_icon.png" // Thay bằng ảnh khác
+        },
+        
+        // ID BÍ MẬT THỨ BA
+        "ALPHA_TEST": {
+            intro: "🧪 KHU VỰC THỬ NGHIỆM 🧪",
+            info: `
+                Mã truy cập: ALPHA_TEST.<br>
+                Vui lòng không phá hoại khi đang thử nghiệm!
+            `,
+            image: "assets/test_subject.jpg"
         }
-    </script>
+        
+        // ********************************************************
+        // ✅ THÊM ID MỚI DỄ DÀNG:
+        // "ID_MỚI_CỦA_BẠN": { intro: "...", info: "...", image: "..." }
+        // ********************************************************
+    };
+
+    // =========================================================
+    // ✅ BƯỚC 2: CẤU HÌNH THÔNG BÁO LỖI CHUNG
+    // =========================================================
+    const ACCESS_DENIED_PROFILE = {
+        intro: "❌ KHÔNG ĐƯỢC PHÉP",
+        info: (id) => `
+            Mã định danh **${id}** không tồn tại trong cơ sở dữ liệu Core.<br>
+            Truy cập bị **CẤM**!
+        `,
+        image: "assets/error_icon.png" // Ảnh cho lỗi
+    };
+    
+    // =========================================================
+    // BƯỚC 3: XỬ LÝ CHUYỂN HƯỚNG VÀ KIỂM TRA
+    // =========================================================
+    const params = new URLSearchParams(window.location.search);
+    
+    // ID người dùng nhập, chuyển sang chữ hoa để so sánh
+    const rawId = params.get('id'); 
+    const id = rawId ? rawId.toUpperCase() : null; 
+    
+    const target = params.get('target');
+    const popupType = sessionStorage.getItem('tempPopupType');
+
+    if (id && target && popupType) {
+        
+        // 1. Dọn dẹp session và thiết lập cờ chuyển tiếp
+        sessionStorage.setItem('secretPopupKey', popupType); 
+        sessionStorage.setItem('isForwarded', 'true');
+        sessionStorage.removeItem('tempPopupType');
+
+        const finalSearchParams = new URLSearchParams();
+        
+        // Luôn truyền lại ID và Target 
+        finalSearchParams.append('id', id);
+        finalSearchParams.append('target', target);
+        
+        let profile;
+
+        // 2. KIỂM TRA ID TRONG CÁC HỒ SƠ BÍ MẬT
+        if (SECRET_PROFILES[id]) {
+            profile = SECRET_PROFILES[id];
+            console.log(`ID Match: ${id}. Sending secret data.`);
+        } else {
+            // 3. NẾU KHÔNG KHỚP: Gửi thông báo cấm
+            profile = ACCESS_DENIED_PROFILE;
+            console.log(`ID Mismatch: ${id}. Sending access denied data.`);
+        }
+
+        // 4. ĐÓNG GÓI DỮ LIỆU
+        // Dùng profile.info(id) nếu là hàm (cho lỗi) hoặc profile.info nếu là chuỗi (cho hồ sơ)
+        const infoDetail = typeof profile.info === 'function' ? profile.info(id) : profile.info;
+        
+        const intro = encodeURIComponent(profile.intro);
+        const ident = encodeURIComponent(profile.image); 
+        const info = encodeURIComponent(infoDetail); 
+        
+        finalSearchParams.append('INTRODUCTION', intro);
+        finalSearchParams.append('IDENTIFICATION', ident);
+        finalSearchParams.append('INFORMATION', info);
+        
+        // 5. Chuyển hướng về trang đích (index.html) kèm theo các tham số
+        const finalURL = target + '?' + finalSearchParams.toString(); 
+        window.location.replace(finalURL);
+        
+    } else {
+        // Trường hợp lỗi: chuyển hướng về trang chủ mà không kích hoạt popup
+        window.location.replace('./');
+    }
+</script>
+
 </body>
 </html>
- 
