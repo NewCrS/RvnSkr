@@ -405,6 +405,22 @@
             transition: opacity 0.3s ease;
         }
 
+        /* --- CSS CHO BẢNG BÍ MẬT (SECRET MODAL) --- */
+        .secret-modal-overlay {
+            /* Che phủ toàn màn hình */
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85); /* Nền mờ */
+            backdrop-filter: blur(4px);
+            z-index: 9999; /* Đảm bảo nó luôn nằm trên cùng */
+            display: none; /* Mặc định ẩn */
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
 				.secret-modal-content {
 				    position: absolute;
 				    top: 50%;
@@ -415,18 +431,28 @@
 				    border: 3px solid #00BBFF;
 				    box-shadow: 0 0 40px #00BBFFAA;
 				    border-radius: 5px;
-				    width: 400px;
-				    max-width: 96%;
-				    max-height: 96%;
+				    /* Giá trị mặc định (Web/Desktop) */
+				    width: 800px; 
+				    max-width: 95%; 
+				    max-height: 95%;
 				    overflow: auto;
 				    text-align: center;
 				    transition: all 0.3s ease;
+				}
+				
+				/* Media Query cho giao diện điện thoại (Màn hình rộng tối đa 600px) */
+				@media screen and (max-width: 600px) {
+				    .secret-modal-content {
+				        width: 400px; /* Chiều rộng cố định cho điện thoại */
+				        max-width: 96%; /* Vẫn giữ co giãn cho màn hình cực nhỏ */
+				        padding: 20px; /* Giảm padding cho điện thoại */
+				    }
 				}
 
         .secret-modal-content img {
             /* Định dạng ảnh bên trong */
             max-width: 100%;
-            max-height: 88vh; /* Giới hạn chiều cao để phù hợp với màn hình */
+            max-height: 80vh; /* Giới hạn chiều cao cho cả hai */
             display: block;
             margin: 0 auto 15px;
             border: 1px solid #333;
@@ -882,7 +908,7 @@
 function checkID() {
     const idInput = document.getElementById("idInput");
     const idError = document.getElementById("idError");
-    const id = idInput.value.trim().toUpperCase();
+    const id = idInput.value.trim();
 
     // 1. Reset trạng thái lỗi
     idError.style.display = 'none';

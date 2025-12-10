@@ -1,3 +1,4 @@
+</html>
 <!DOCTYPE html>
 <html>
 <head>
@@ -21,16 +22,25 @@
 <script>
     // =========================================================
     // ✅ BƯỚC 1: KHAI BÁO TẤT CẢ CÁC ID BÍ MẬT TẠI ĐÂY
-    // Thêm custom ID bằng cách thêm một cặp 'MÃ_ĐỊNH_DANH': { dữ liệu... }
+    // *LƯU Ý: ID PHÂN BIỆT CHỮ HOA/CHỮ THƯỜNG (Case Sensitive)*
     // =========================================================
     const SECRET_PROFILES = {
         // ID BÍ MẬT ĐẦU TIÊN (Ví dụ cũ)
-        "12072008": {
-            intro: "🔥 Crush 🔥",
+        "Rvn": {
+            intro: "Tổ chức",
             info: `
-                Had crush on her since 2022.
+                Revenantskr là một tổ chức bảo vệ hoà bình trong thầm lặng.
             `,
-            image: "crush.png" // Đảm bảo URL ảnh đúng
+            // Đã kiểm tra: Đặt tên file ảnh chính xác
+            image: "images.jpg" 
+        },
+        "thao": {
+            intro: "🔥 Em ghệ iu 🔥",
+            info: `
+                🫶🏻.
+            `,
+            // Đã kiểm tra: Đặt tên file ảnh chính xác
+            image: "ghe.png" 
         },
         
         // ID BÍ MẬT THỨ HAI (Ví dụ mới, bạn chỉ cần thay đổi nội dung này)
@@ -50,6 +60,7 @@
             info: `
                 Mã truy cập: ALPHA_TEST.<br>
                 Vui lòng không phá hoại khi đang thử nghiệm!
+            <br>
             `,
             image: "assets/test_subject.jpg"
         }
@@ -77,9 +88,9 @@
     // =========================================================
     const params = new URLSearchParams(window.location.search);
     
-    // ID người dùng nhập, chuyển sang chữ hoa để so sánh
+    // ID người dùng nhập. KHÔNG chuyển thành chữ hoa.
     const rawId = params.get('id'); 
-    const id = rawId ? rawId.toUpperCase() : null; 
+    const id = rawId; // Giữ nguyên chữ hoa/thường (Case sensitive)
     
     const target = params.get('target');
     const popupType = sessionStorage.getItem('tempPopupType');
@@ -99,7 +110,7 @@
         
         let profile;
 
-        // 2. KIỂM TRA ID TRONG CÁC HỒ SƠ BÍ MẬT
+        // 2. KIỂM TRA ID TRONG CÁC HỒ SƠ BÍ MẬT (Case sensitive check)
         if (SECRET_PROFILES[id]) {
             profile = SECRET_PROFILES[id];
             console.log(`ID Match: ${id}. Sending secret data.`);
