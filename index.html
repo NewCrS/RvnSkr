@@ -4,7 +4,7 @@
 <head>
 	<meta charset="UTF-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-	<title>Revenantskr - Phase Shift UI</title>
+	<title>Revenantskr - The Independent Security Mandate (ISM)</title>
 	<style>
 		body {
 			margin: 0;
@@ -814,9 +814,11 @@
 			    
 			    const targetMode = (tabName === 'home') ? 'home' : (tabName === 'general' ? 'general' : 'internal');
 			    
-			    // LOGIC MỚI: Chỉ chèn iframe camera khi vào tab GENERAL lần đầu
+			    // LOGIC ĐÃ SỬA: Bật/Tắt camera
 			    if (tabName === 'general') {
 			        loadGeneralScanner();
+			    } else {
+			        unloadGeneralScanner(); // Tắt camera khi chuyển tab
 			    }
 			    
 			    let blurRequired = false;
@@ -874,6 +876,34 @@
 			    }
 			}
 				
+			/**
+			 * Hàm tắt và xóa iframe camera khi rời khỏi tab General
+			 */
+			function unloadGeneralScanner() {
+			    if (!generalScannerLoaded) {
+			        return; // Đã tắt rồi
+			    }
+			    
+			    const container = document.getElementById('camera-frame-container');
+			    if (container) {
+			        // Xóa nội dung iframe
+			        container.innerHTML = ''; 
+			        
+			        // Tạo lại nội dung Placeholder ban đầu
+			        const placeholder = document.createElement('p');
+			        placeholder.textContent = "Scanning Module is offline. Click 'GENERAL' to initialize and request camera access.";
+			        
+			        // Đảm bảo container có các thuộc tính display/justify/align để text được căn giữa
+					container.style.display = 'flex';
+					container.style.justifyContent = 'center';
+					container.style.alignItems = 'center';
+			        
+			        container.appendChild(placeholder);
+			        
+			        generalScannerLoaded = false;
+			        console.log("Scanning Module Offline. Iframe removed.");
+			    }
+			}
 		
 			// --- HÀM XỬ LÝ MODAL ---
 			function showSecretModal(title, message, imageUrl) {
