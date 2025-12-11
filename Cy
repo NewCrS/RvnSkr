@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Đang Chuyển Hướng...</title>
+    <script>
+        // ID: РэндзоНаудзен
+        const decodedID = "6789786586"; // Dùng giá trị chưa mã hóa
+        const encodedID = encodeURIComponent(decodedID); // Mã hóa khi tạo URL
+        const finalTarget = encodeURIComponent("./"); // Tương đương với: .%2F
+
+        // 1. **BƯỚC SỬA LỖI:** Thiết lập sessionStorage như hàm checkID() gốc
+        const popupType = `POPUP_${decodedID}`; 
+        sessionStorage.setItem('tempPopupType', popupType);
+        
+        // 2. Xây dựng URL chuyển hướng
+        const forwardURL = `forward.html?id=${encodedID}&target=${finalTarget}`;
+        
+        // 3. Chuyển hướng
+        window.location.replace(forwardURL);
+    </script>
+</head>
+<body>
+    </body>
+</html>
