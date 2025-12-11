@@ -1137,7 +1137,7 @@ window.onload = function() {
 					document.addEventListener('DOMContentLoaded', () => {
 					    // 1. Lớp Nền (Background Layer) - Z-index thấp
 					    generateDustParticles(
-					        18, 
+					        0, 
 					        'dust-particle', 
 					        '.dust-overlay-background', // CHÈN VÀO LỚP NỀN (Z-INDEX: 1)
 					        18, 
@@ -1148,7 +1148,7 @@ window.onload = function() {
 					    
 					    // 2. Lớp Phủ Ngoài (Foreground Layer) - Z-index cao
 					    generateDustParticles(
-					        8, 
+					        0, 
 					        'dust-particle-foreground', 
 					        '.dust-overlay', // CHÈN VÀO LỚP PHỦ NGOÀI (Z-INDEX: 800000)
 					        8, 
