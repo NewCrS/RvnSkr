@@ -20,12 +20,21 @@
 <h1>[PROCESSING REDIRECTION...]</h1>
 
 <script>
+    auth = "con"
     // =========================================================
     // ✅ BƯỚC 1: KHAI BÁO TẤT CẢ CÁC ID BÍ MẬT TẠI ĐÂY
     // *LƯU Ý: ID PHÂN BIỆT CHỮ HOA/CHỮ THƯỜNG (Case Sensitive)*
     // =========================================================
     const SECRET_PROFILES = {
-        // ID BÍ MẬT ĐẦU TIÊN (Ví dụ cũ)
+        [auth]: {
+            intro: " ",
+            info: `
+                 
+            `,
+            
+            image: "aspest.png" 
+        },
+
         "Rvn": {
             intro: " ",
             info: `
@@ -33,14 +42,6 @@
             `,
             // Đã kiểm tra: Đặt tên file ảnh chính xác
             image: "images.jpg" 
-        },
-        "thao": {
-            intro: "🔥 Em ghệ iu 🔥",
-            info: `
-                🫶🏻.
-            `,
-            // Đã kiểm tra: Đặt tên file ảnh chính xác
-            image: "ghe.png" 
         },
         
         // ID BÍ MẬT THỨ HAI (Ví dụ mới, bạn chỉ cần thay đổi nội dung này)
