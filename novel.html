@@ -1,10 +1,9 @@
-</html>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rvn Light Novel</title>
+    <title>Rvn Light Novel - Premium Reader</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
     <style>
         :root { 
@@ -13,7 +12,7 @@
             --bg-main: #ffffff;
             --bg-sidebar: #ffffff;
             --text-color: #000000;
-            --item-hover: #fcfcfc;
+            --item-hover: #f5f5f5;
             --border-color: #eeeeee;
             --btn-toggle-color: rgba(0, 0, 0, 0.7);
             --pdf-filter: none;
@@ -21,12 +20,22 @@
 
         [data-theme="dark"] {
             --bg-main: #121212;
-            --bg-sidebar: #1e1e1e;
+            --bg-sidebar: #1a1a1a;
             --text-color: #e0e0e0;
             --item-hover: #2d2d2d;
             --border-color: #333333;
             --btn-toggle-color: rgba(255, 255, 255, 0.8);
             --pdf-filter: invert(0.9) hue-rotate(180deg) brightness(1.1) contrast(1.1);
+        }
+
+        [data-theme="black"] {
+            --bg-main: #000000;
+            --bg-sidebar: #000000;
+            --text-color: #ffffff;
+            --item-hover: #111111;
+            --border-color: #222222;
+            --btn-toggle-color: #ffffff;
+            --pdf-filter: invert(1) hue-rotate(180deg) brightness(1) contrast(1.2);
         }
 
         body { 
@@ -36,138 +45,163 @@
             overflow: hidden; transition: background 0.3s ease; 
         }
 
-        /* Nút 3 gạch */
         #menu-toggle {
-            position: fixed; top: 10px; left: 10px; z-index: 1100;
+            position: fixed; top: 12px; left: 12px; z-index: 1100;
             background: transparent; color: var(--btn-toggle-color);
             border: none; font-size: 30px; cursor: pointer; padding: 5px; line-height: 1; 
+            outline: none; -webkit-tap-highlight-color: transparent;
         }
 
-        /* Sidebar */
         #sidebar { 
             position: fixed; top: 0; left: 0; bottom: 0;
             width: var(--sidebar-w); background: var(--bg-sidebar); 
             overflow: hidden; display: flex; flex-direction: column;
-            transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+            transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1), background 0.3s ease;
             z-index: 1000; border-right: 1px solid var(--border-color);
-            box-shadow: 10px 0 30px rgba(0,0,0,0.05);
         }
         #sidebar.hidden { transform: translateX(-100%); }
 
-        .sidebar-header { padding: 60px 20px 15px; font-weight: bold; border-bottom: 1px solid var(--border-color); font-size: 1.1rem; }
+        .sidebar-header { padding: 60px 20px 15px; font-weight: bold; border-bottom: 1px solid var(--border-color); font-size: 1.1rem; letter-spacing: 1px; }
         #list { flex-grow: 1; overflow-y: auto; }
-        .chapter-item { padding: 15px 20px; border-bottom: 1px solid var(--border-color); cursor: pointer; font-size: 0.9rem; }
-        .chapter-item.active { background: rgba(59, 130, 246, 0.1); color: var(--accent); border-left: 4px solid var(--accent); font-weight: bold; }
+        .chapter-item { padding: 16px 20px; border-bottom: 1px solid var(--border-color); cursor: pointer; font-size: 0.9rem; transition: 0.2s; -webkit-tap-highlight-color: transparent; }
+        .chapter-item:hover { background: var(--item-hover); }
+        .chapter-item.active { background: rgba(59, 130, 246, 0.15); color: var(--accent); border-left: 5px solid var(--accent); font-weight: bold; }
 
-        /* Main Viewer */
+        .sidebar-footer { padding: 20px; border-top: 1px solid var(--border-color); }
+        .theme-switch-container { width: 100%; user-select: none; -webkit-tap-highlight-color: transparent; }
+        .theme-labels { display: flex; justify-content: space-between; font-size: 10px; font-weight: bold; margin-bottom: 8px; opacity: 0.6; text-transform: uppercase; }
+        
+        .slider-track {
+            width: 100%; height: 24px; background: var(--item-hover);
+            border-radius: 12px; position: relative; cursor: pointer;
+            border: 1px solid var(--border-color); box-sizing: border-box;
+            outline: none; 
+        }
+        .slider-thumb {
+            width: calc(33.33% - 4px); height: 18px; background: var(--accent);
+            border-radius: 10px; position: absolute; top: 2px; left: 2px;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            pointer-events: none; 
+        }
+
+        [data-theme="light"] .slider-thumb { transform: translateX(0); }
+        [data-theme="dark"] .slider-thumb { transform: translateX(100%); }
+        [data-theme="black"] .slider-thumb { transform: translateX(200%); }
+
         #main-viewer { 
-            width: 100%; height: 100vh;
-            overflow-y: auto; display: flex; flex-direction: column; align-items: center; 
-            background: var(--bg-main); 
-            transition: padding-left 0.4s ease;
-            box-sizing: border-box;
+            width: 100%; height: 100vh; overflow-y: auto; 
+            display: flex; flex-direction: column; align-items: center; 
+            background: var(--bg-main); transition: padding-left 0.4s ease, background 0.3s ease;
         }
         #main-viewer.shifted { padding-left: var(--sidebar-w); }
 
-        #pdf-render-container { width: 100%; max-width: 900px; margin: 20px 0; padding: 0 10px; }
-        
-        canvas { 
-            display: block; margin: 0 auto 20px; 
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1); 
-            max-width: 100%; height: auto !important; 
-            filter: var(--pdf-filter);
-            image-rendering: -webkit-optimize-contrast;
+        #pdf-container { 
+            width: 100%; max-width: 850px; margin: 0 auto; padding: 0; 
+            box-sizing: border-box; line-height: 0; 
         }
 
-        /* --- TỐI ƯU GIAO DIỆN DỌC (MOBILE) --- */
-        @media (max-width: 768px) {
-            #sidebar { width: 40%; }
-            #main-viewer.shifted { padding-left: 0; }
+        canvas { 
+            display: block; 
+            max-width: 100%; height: auto !important; 
+            filter: var(--pdf-filter);
+            transition: filter 0.3s ease; 
+            image-rendering: -webkit-optimize-contrast;
+
+        
+            border: 1px solid #ffffffff; 
+
+        
+            clip-path: inset(8% 0 11% 0);
             
-            /* Làm thanh menu mỏng lại */
-            #menu-toggle {
-                top: 5px;
-                left: 5px;
-                font-size: 26px;
-            }
+        
+            margin: -24% auto; 
+            
+            position: relative;
+            z-index: 1;
+        }
 
-            /* Giảm lề trên của container để đẩy nội dung lên cao hơn */
-            #pdf-render-container {
-                margin-top: 50px; 
-            }
-
-            .sidebar-header {
-                padding-top: 50px;
-                font-size: 1rem;
-            }
-
-            .chapter-item {
-                padding: 12px 15px; /* Thu hẹp khoảng cách giữa các tập */
-                font-size: 0.85rem;
+        @media (max-width: 768px) {
+            #sidebar { width: 40%; } 
+            #main-viewer.shifted { padding-left: 0; }
+            #menu-toggle { font-size: 26px; top: 8px; left: 8px; }
+            #pdf-container { margin-top: 50px; }
+            canvas { 
+                clip-path: inset(6% 0 9% 0);
+                margin: -20% auto; 
             }
         }
     </style>
 </head>
 <body>
 
-<button id="menu-toggle" title="Mở danh sách">☰</button>
+<button id="menu-toggle">☰</button>
 
 <div id="sidebar" class="hidden">
-    <div class="sidebar-header">DANH SÁCH TẬP</div>
-    <div id="list">Đang quét dữ liệu...</div>
-    <div class="sidebar-footer" style="padding: 15px;">
-        <button id="theme-btn" style="width: 100%; padding: 10px; cursor: pointer; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-sidebar); color: var(--text-color);">
-            <span id="theme-icon">🌙</span> <span id="theme-text">Chế độ tối</span>
-        </button>
+    <div class="sidebar-header">ARCHIVE LIST</div>
+    <div id="list">Initialing...</div>
+    
+    <div class="sidebar-footer">
+        <div class="theme-switch-container">
+            <div class="theme-labels">
+                <span>Light</span>
+                <span>Dark</span>
+                <span>Black</span>
+            </div>
+            <div class="slider-track" id="theme-track" tabindex="0">
+                <div class="slider-thumb"></div>
+            </div>
+        </div>
     </div>
 </div>
 
 <div id="main-viewer">
-    <div id="pdf-render-container"></div>
+    <div id="pdf-container"></div>
 </div>
 
 <script>
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
 
     const sidebar = document.getElementById('sidebar');
-    const mainViewer = document.getElementById('main-viewer');
-    const menuToggle = document.getElementById('menu-toggle');
-    const themeBtn = document.getElementById('theme-btn');
-    const themeIcon = document.getElementById('theme-icon');
-    const themeText = document.getElementById('theme-text');
+    const viewer = document.getElementById('main-viewer');
+    const menuBtn = document.getElementById('menu-toggle');
+    const themeTrack = document.getElementById('theme-track');
     const listEl = document.getElementById('list');
-    const container = document.getElementById('pdf-render-container');
+    const pdfContainer = document.getElementById('pdf-container');
 
-    // Theme logic
-    const updateThemeUI = (theme) => {
-        themeIcon.innerText = theme === 'dark' ? '☀️' : '🌙';
-        themeText.innerText = theme === 'dark' ? 'Chế độ sáng' : 'Chế độ tối';
-    };
+    const themes = ['light', 'dark', 'black'];
+    let currentTheme = localStorage.getItem('theme') || 'light';
 
-    themeBtn.onclick = () => {
-        let theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    const applyTheme = (theme) => {
         document.documentElement.setAttribute('data-theme', theme);
         localStorage.setItem('theme', theme);
-        updateThemeUI(theme);
+        currentTheme = theme;
     };
 
-    // Toggle menu
-    menuToggle.onclick = (e) => {
+    applyTheme(currentTheme);
+
+    themeTrack.onclick = (e) => {
+        const rect = themeTrack.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const section = rect.width / 3;
+
+        if (x < section) applyTheme('light');
+        else if (x < section * 2) applyTheme('dark');
+        else applyTheme('black');
+    };
+
+    menuBtn.onclick = (e) => {
         const isHidden = sidebar.classList.toggle('hidden');
-        if (!isHidden && window.innerWidth > 768) {
-            mainViewer.classList.add('shifted');
-        } else {
-            mainViewer.classList.remove('shifted');
-        }
+        if (!isHidden && window.innerWidth > 768) viewer.classList.add('shifted');
+        else viewer.classList.remove('shifted');
         e.stopPropagation();
     };
 
-    mainViewer.onclick = () => {
+    viewer.onclick = () => {
         sidebar.classList.add('hidden');
-        mainViewer.classList.remove('shifted');
+        viewer.classList.remove('shifted');
     };
 
-    // Load Index & PDF
     fetch('assets/novel/index.json')
         .then(res => res.json())
         .then(data => {
@@ -178,34 +212,38 @@
                 div.textContent = item.title;
                 div.onclick = (e) => {
                     e.stopPropagation();
-                    loadPDF('assets/novel/' + item.file, div);
+                    renderPDF('assets/novel/' + item.file, div);
                     sidebar.classList.add('hidden');
-                    mainViewer.classList.remove('shifted');
+                    viewer.classList.remove('shifted');
                 };
                 listEl.appendChild(div);
-                if(index === 0) loadPDF('assets/novel/' + item.file, div);
+                if(index === 0) renderPDF('assets/novel/' + item.file, div);
             });
+        })
+        .catch(err => {
+            listEl.innerHTML = '<div style="padding:20px; color:red;">Error loading index.json</div>';
         });
 
-    async function loadPDF(url, element) {
+    async function renderPDF(url, element) {
         document.querySelectorAll('.chapter-item').forEach(el => el.classList.remove('active'));
         element.classList.add('active');
-        container.innerHTML = '<p style="text-align:center">Đang nạp dữ liệu...</p>';
-        mainViewer.scrollTop = 0;
+        
+        pdfContainer.innerHTML = '<p style="text-align:center; margin-top:50px;">ACCESSING DATA...</p>';
+        viewer.scrollTop = 0;
 
         try {
             const pdf = await pdfjsLib.getDocument(url).promise;
-            container.innerHTML = '';
+            pdfContainer.innerHTML = '';
             const dpr = window.devicePixelRatio || 1;
-            const baseScale = 2.0; 
+            const scale = 2.0; 
 
             for (let i = 1; i <= pdf.numPages; i++) {
                 const page = await pdf.getPage(i);
-                const viewport = page.getViewport({ scale: baseScale });
+                const viewport = page.getViewport({ scale: scale });
                 const canvas = document.createElement('canvas');
-                container.appendChild(canvas);
+                pdfContainer.appendChild(canvas);
+                
                 const context = canvas.getContext('2d');
-
                 canvas.width = Math.floor(viewport.width * dpr);
                 canvas.height = Math.floor(viewport.height * dpr);
                 canvas.style.width = viewport.width + "px";
@@ -214,7 +252,7 @@
                 await page.render({ canvasContext: context, viewport: viewport }).promise;
             }
         } catch (err) {
-            container.innerHTML = 'Lỗi nạp file.';
+            pdfContainer.innerHTML = '<p style="text-align:center; color:red;">FILE_ACCESS_DENIED</p>';
         }
     }
 </script>
