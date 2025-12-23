@@ -704,6 +704,56 @@
     }
 }
 
+/* Style cho nút Đọc truyện */
+.read-btn {
+    background: transparent;
+    color: #00BBFF;
+    border: 2px solid #00BBFF;
+    padding: 15px 40px;
+    font-size: 16px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 4px;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 15px rgba(0, 187, 255, 0.2);
+}
+
+.read-btn:hover {
+    background: #00BBFF;
+    color: #000;
+    box-shadow: 0 0 30px rgba(0, 187, 255, 0.6);
+    transform: scale(1.05);
+}
+
+.read-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+    transition: 0.5s;
+}
+
+.read-btn:hover::before {
+    left: 100%;
+}
+
+.hidden-storage {
+    display: none !important;
+}
+
+
+
+
+
+
+
+
         
         
 	</style>
@@ -746,7 +796,7 @@
 				
 		<div id="general" class="tab-content">
 		   
-		    <div class="frame-wrapper">
+		    <div class="frame-wrapper"  style="display: none;">>
 		        <div id="camera-frame-container" 
 		            style="
 		                width: 90%; 
@@ -767,9 +817,18 @@
 		    </div>
 		</div> 
 		<div id="about" class="tab-content">
-			<h2 style="color: #00BBFF">ABOUT SYSTEM</h2>
-			<p>Quyền truy cập bị từ chối!</p>
-			<p>Đề nghị xác minh hoặc nhận ủy quyền cao hơn.</p>
+		    <h2 style="color: #00BBFF; letter-spacing: 3px;">SYSTEM INFORMATION</h2>
+		    <p>Quyền truy cập nội bộ đã được xác minh.</p>
+		    <p>Cơ sở dữ liệu lưu trữ các tài liệu bảo mật và hồ sơ lưu trữ Independent Security Mandate.</p>
+		    
+		    <div style="margin-top: 30px;">
+		        <a href="novel.html" style="text-decoration: none;">
+		            <button class="read-btn">
+		                <span class="btn-glitch"></span>
+		                ACCESS NOVEL ARCHIVE
+		            </button>
+		        </a>
+		    </div>
 		</div>
 		
 		<div id="id" class="tab-content">
