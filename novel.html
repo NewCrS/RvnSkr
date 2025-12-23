@@ -17,6 +17,8 @@
             --border-color: #eeeeee;
             --btn-toggle-color: rgba(0, 0, 0, 0.7);
             --pdf-filter: none;
+            /* Biến mới để điều khiển Zoom CSS */
+            --zoom-factor: 1; 
         }
 
         [data-theme="dark"] {
@@ -70,15 +72,15 @@
         .chapter-item:hover { background: var(--item-hover); }
         .chapter-item.active { background: rgba(59, 130, 246, 0.15); color: var(--accent); border-left: 5px solid var(--accent); font-weight: bold; }
 
-        .sidebar-footer { padding: 25px 20px; border-top: 1px solid var(--border-color); }
-        .theme-switch-container { width: 100%; user-select: none; -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
-        .theme-labels { display: flex; justify-content: space-around; font-size: 10px; font-weight: bold; margin-bottom: 8px; opacity: 0.6; text-transform: uppercase; }
+        .sidebar-footer { padding: 25px 20px; border-top: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 20px; }
+        .control-group { width: 100%; user-select: none; -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+        .control-labels { display: flex; justify-content: space-around; font-size: 10px; font-weight: bold; margin-bottom: 8px; opacity: 0.6; text-transform: uppercase; }
         
         .slider-track {
             width: 100%; height: 28px; background: var(--item-hover);
             border-radius: 14px; position: relative; cursor: pointer;
             border: 1px solid var(--border-color); box-sizing: border-box;
-            outline: none; overflow: hidden; -webkit-tap-highlight-color: transparent;
+            outline: none; overflow: hidden;
         }
         .slider-thumb {
             width: 33.33%; height: 100%; background: var(--accent);
@@ -88,37 +90,60 @@
             pointer-events: none; 
         }
 
-        [data-theme="light"] .slider-thumb { transform: translateX(0%); }
-        [data-theme="dark"] .slider-thumb { transform: translateX(100%); }
-        [data-theme="black"] .slider-thumb { transform: translateX(200%); }
+        /* Logic vị trí Thumb */
+        [data-zoom="100"] .zoom-thumb { transform: translateX(0%); }
+        [data-zoom="110"] .zoom-thumb { transform: translateX(100%); }
+        [data-zoom="120"] .zoom-thumb { transform: translateX(200%); }
 
-        /* --- MAIN VIEWER --- */
-        #main-viewer { 
-            width: 100%; height: 100vh; overflow-y: auto; 
-            display: flex; flex-direction: column; align-items: center; 
-            background: var(--bg-main); transition: padding-left 0.4s ease, background 0.3s ease, opacity 0.4s ease;
-            overscroll-behavior-y: none; 
-            -webkit-overflow-scrolling: touch;
-        }
-        #main-viewer.shifted { padding-left: var(--sidebar-w); }
+        [data-theme="light"] .theme-thumb { transform: translateX(0%); }
+        [data-theme="dark"] .theme-thumb { transform: translateX(100%); }
+        [data-theme="black"] .theme-thumb { transform: translateX(200%); }
+#main-viewer { 
+    width: 100%;
+    height: 100vh;
+    overflow-y: auto;
+    overflow-x: hidden; /* ⬅️ quan trọng: không lệch ngang khi zoom */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: var(--bg-main);
+    transition: padding-left 0.4s ease, background 0.3s ease, opacity 0.4s ease;
+    overscroll-behavior-y: none;
+    -webkit-overflow-scrolling: touch;
+}
 
-        #pdf-container { 
-            width: 100%; max-width: 850px; margin: 0 auto; padding: 0; 
-            box-sizing: border-box; line-height: 0; 
-            will-change: transform; 
-            transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-        }
+#pdf-zoom-layer {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    
+    transform: scale(var(--zoom-factor));
+    transform-origin: center top;
+    transition: transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+#pdf-container {
+    width: 100%;
+    max-width: 850px;
+    line-height: 0;
+}
+
 
         canvas { 
-            display: block; max-width: 100%; height: auto !important; 
+            display: block; width: 100%; height: auto !important; 
             filter: var(--pdf-filter); transition: filter 0.3s ease; 
             image-rendering: -webkit-optimize-contrast;
             clip-path: inset(8% 0 11% 0);
-            margin: -24% auto; 
+            /* Khoảng cách âm tỉ lệ % theo chiều rộng giúp trang luôn khít khi zoom */
+            margin-top: -20%; 
+            margin-bottom: -20%;
             position: relative; z-index: 1;
         }
+        canvas:first-child { margin-top: 0; }
 
-        /* --- NEXT CHAPTER INDICATOR (UPDATED CHILL & EXPLODE) --- */
+
+
+        /* --- NEXT CHAPTER INDICATOR --- */
         #next-chapter-indicator {
             position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(150px);
             background: var(--accent); color: white; padding: 12px 24px; border-radius: 30px;
@@ -127,82 +152,33 @@
             white-space: nowrap;
         }
         #next-chapter-indicator.visible { transform: translateX(-50%) translateY(0); opacity: 1; }
-        
-        /* Hiệu ứng nén Chill: chậm lúc đầu, cực nhanh và dứt khoát ở cuối */
-        #next-chapter-indicator.charging { 
-            background: #65aaff; 
-            animation: chill-compress 0.8s cubic-bezier(0.7, 0, 0.3, 1) forwards;
-        }
+        #next-chapter-indicator.charging { background: #65aaff; animation: chill-compress 0.8s cubic-bezier(0.7, 0, 0.3, 1) forwards; }
 
-        #explosion-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100vw; height: 100vh;
-            pointer-events: none;
-            z-index: 9999;
-            display: flex; align-items: center; justify-content: center;
-        }
+        #explosion-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 9999; display: flex; align-items: center; justify-content: center; }
+        .ripple { position: absolute; width: 10px; height: 10px; background: #65aaff; border-radius: 50%; transform: scale(0); opacity: 0; }
+        .ripple.active { animation: explode-out 0.8s ease-out forwards; }
 
-        .ripple {
-            position: absolute;
-            width: 10px; height: 10px;
-            background: #65aaff;
-            border-radius: 50%;
-            transform: scale(0);
-            opacity: 0;
-        }
+        #next-chapter-indicator svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
+        #next-chapter-indicator rect { fill: none; stroke: #ffffff; stroke-width: 4; stroke-dasharray: 400; stroke-dashoffset: 400; stroke-linecap: round; }
+        #next-chapter-indicator.charging rect { transition: stroke-dashoffset 0.75s cubic-bezier(0.4, 0, 0.2, 1); stroke-dashoffset: 0; }
+        #next-chapter-indicator span { position: relative; z-index: 3; }
 
-        .ripple.active {
-            animation: explode-out 0.8s ease-out forwards;
-        }
-
-        #next-chapter-indicator svg {
-            position: absolute;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            pointer-events: none;
-            overflow: visible;
-        }
-
-        #next-chapter-indicator rect {
-            fill: none;
-            stroke: #ffffff;
-            stroke-width: 4;
-            stroke-dasharray: 400;
-            stroke-dashoffset: 400;
-            stroke-linecap: round;
-            transition: none;
-        }
-
-        #next-chapter-indicator.charging rect {
-            transition: stroke-dashoffset 0.75s cubic-bezier(0.4, 0, 0.2, 1);
-            stroke-dashoffset: 0;
-        }
-
-        #next-chapter-indicator span {
-            position: relative;
-            z-index: 3;
-        }
-
-        /* Animation Chill Compress & Snap Explode */
         @keyframes chill-compress {
             0% { transform: translateX(-50%) scale(1); filter: blur(0px); }
-            30% { transform: translateX(-50%) scale(1.05, 0.95); filter: blur(0.1px); } /* Co giãn chill */
+            30% { transform: translateX(-50%) scale(1.05, 0.95); filter: blur(0.1px); }
             60% { transform: translateX(-50%) scale(0.6, 0.8); opacity: 1; }
-            90% { transform: translateX(-50%) scale(0.1); opacity: 1; filter: blur(0.4px); } /* Nén cực độ */
-            100% { transform: translateX(-50%) scale(0); opacity: 0; filter: blur(0.8px); } /* Biến mất dứt khoát */
+            90% { transform: translateX(-50%) scale(0.1); opacity: 1; filter: blur(0.4px); }
+            100% { transform: translateX(-50%) scale(0); opacity: 0; filter: blur(0.8px); }
         }
 
-        @keyframes explode-out {
-            0% { transform: scale(0); opacity: 1; }
-            100% { transform: scale(500); opacity: 0; }
-        }
+        @keyframes explode-out { 0% { transform: scale(0); opacity: 1; } 100% { transform: scale(500); opacity: 0; } }
 
         @media (max-width: 768px) {
             #sidebar { width: 40%; } 
             #main-viewer.shifted { padding-left: 0; }
             #menu-toggle { font-size: 26px; top: 8px; left: 8px; }
             #pdf-container { margin-top: 50px; }
-            canvas { clip-path: inset(6% 0 9% 0); margin: -20% auto; }
+            canvas { clip-path: inset(6% 0 9% 0); margin-top: -15.5%; margin-bottom: -15.5%; }
         }
     </style>
 </head>
@@ -215,21 +191,34 @@
     <div id="list">Initialing...</div>
     
     <div class="sidebar-footer">
-        <div class="theme-switch-container">
-            <div class="theme-labels">
+        <div class="control-group" id="zoom-selector">
+            <div class="control-labels">
+                <span>100%</span>
+                <span>110%</span>
+                <span>120%</span>
+            </div>
+            <div class="slider-track" id="zoom-track">
+                <div class="slider-thumb zoom-thumb"></div>
+            </div>
+        </div>
+
+        <div class="control-group" id="theme-selector">
+            <div class="control-labels">
                 <span>Light</span>
                 <span>Dark</span>
                 <span>Black</span>
             </div>
-            <div class="slider-track" id="theme-track" tabindex="0">
-                <div class="slider-thumb"></div>
+            <div class="slider-track" id="theme-track">
+                <div class="slider-thumb theme-thumb"></div>
             </div>
         </div>
     </div>
 </div>
 
 <div id="main-viewer">
-    <div id="pdf-container"></div>
+    <div id="pdf-zoom-layer">
+        <div id="pdf-container"></div>
+    </div>
 </div>
 
 <div id="next-chapter-indicator">
@@ -246,6 +235,7 @@
     const viewer = document.getElementById('main-viewer');
     const menuBtn = document.getElementById('menu-toggle');
     const themeTrack = document.getElementById('theme-track');
+    const zoomTrack = document.getElementById('zoom-track');
     const listEl = document.getElementById('list');
     const pdfContainer = document.getElementById('pdf-container');
     const nextIndicator = document.getElementById('next-chapter-indicator');
@@ -254,9 +244,46 @@
 
     let chapterList = [];
     let currentChapterIndex = 0;
+    let currentFileUrl = "";
     let holdTimer = null;
     let isChangingChapter = false;
 
+    // --- ZOOM LOGIC MỚI (TỐI ƯU GPU) ---
+    let savedZoomLevel = localStorage.getItem('reader-zoom-lvl') || "100";
+    const updateZoomUI = (lvl) => {
+        const factor = parseInt(lvl) / 100;
+        document.documentElement.style.setProperty('--zoom-factor', factor);
+        document.documentElement.setAttribute('data-zoom', lvl);
+        localStorage.setItem('reader-zoom-lvl', lvl);
+    };
+    updateZoomUI(savedZoomLevel);
+
+    zoomTrack.onclick = (e) => {
+        const rect = zoomTrack.getBoundingClientRect();
+        const percent = ((e.clientX - rect.left) / rect.width) * 100;
+        
+        if (percent < 33.33) updateZoomUI("100");
+        else if (percent < 66.66) updateZoomUI("110");
+        else updateZoomUI("120");
+    };
+
+    // Theme Logic
+    const applyTheme = (theme) => {
+        document.documentElement.setAttribute('data-theme', theme);
+        localStorage.setItem('theme', theme);
+    };
+    applyTheme(localStorage.getItem('theme') || 'light');
+
+    themeTrack.onclick = (e) => {
+        const rect = themeTrack.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const percent = (x / rect.width) * 100;
+        if (percent < 33.33) applyTheme('light');
+        else if (percent < 66.66) applyTheme('dark');
+        else applyTheme('black');
+    };
+
+    // --- REMAINDER OF YOUR ORIGINAL LOGIC (TOUCH/SCROLL/PDF) ---
     function updateStrokeArray() {
         const w = nextIndicator.offsetWidth;
         const h = nextIndicator.offsetHeight;
@@ -264,25 +291,6 @@
         progressRect.style.strokeDasharray = perimeter;
         progressRect.style.strokeDashoffset = perimeter;
     }
-
-    const themes = ['light', 'dark', 'black'];
-    let currentTheme = localStorage.getItem('theme') || 'light';
-    const applyTheme = (theme) => {
-        document.documentElement.setAttribute('data-theme', theme);
-        localStorage.setItem('theme', theme);
-        currentTheme = theme;
-    };
-    applyTheme(currentTheme);
-
-    themeTrack.onclick = (e) => {
-        const rect = themeTrack.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const percent = (x / rect.width) * 100;
-        
-        if (percent < 33.33) applyTheme('light');
-        else if (percent < 66.66) applyTheme('dark');
-        else applyTheme('black');
-    };
 
     menuBtn.onclick = (e) => {
         const isHidden = sidebar.classList.toggle('hidden');
@@ -300,18 +308,16 @@
         if (isChangingChapter) return;
         const scrollPos = viewer.scrollTop;
         const maxScroll = viewer.scrollHeight - viewer.clientHeight;
-        
         if (scrollPos >= maxScroll - 50 && currentChapterIndex < chapterList.length - 1) {
             nextIndicator.classList.add('visible');
             updateStrokeArray();
-        } else {
-            if (!holdTimer) nextIndicator.classList.remove('visible');
+        } else if (!holdTimer) {
+            nextIndicator.classList.remove('visible');
         }
     }, { passive: true });
 
     let startY = 0;
     const damping = 0.4; 
-
     viewer.addEventListener('touchstart', (e) => {
         startY = e.touches[0].pageY;
         pdfContainer.style.transition = 'none';
@@ -333,7 +339,6 @@
             let absDiff = Math.abs(diff);
             let translate = -Math.pow(absDiff, 0.8) * damping;
             pdfContainer.style.transform = `translateY(${translate}px)`;
-
             if (absDiff > 70 && currentChapterIndex < chapterList.length - 1) {
                 nextIndicator.classList.add('visible');
                 if (!holdTimer) {
@@ -370,16 +375,12 @@
         const rect = nextIndicator.getBoundingClientRect();
         ripple.style.left = (rect.left + rect.width / 2) + 'px';
         ripple.style.top = (rect.top + rect.height / 2) + 'px';
-        
         ripple.classList.add('active');
         if (window.navigator.vibrate) window.navigator.vibrate(150);
-
         setTimeout(() => {
             goToNextChapter();
-            setTimeout(() => {
-                ripple.classList.remove('active');
-            }, 500);
-        }, 0);
+            setTimeout(() => { ripple.classList.remove('active'); }, 400);
+        }, 200);
     }
 
     function goToNextChapter() {
@@ -388,9 +389,7 @@
             nextIndicator.classList.remove('visible', 'charging');
             pdfContainer.style.transform = 'translateY(0)';
             viewer.style.opacity = '0';
-            
             const nextItem = document.querySelectorAll('.chapter-item')[currentChapterIndex];
-            
             setTimeout(() => {
                 renderPDF('assets/novel/' + chapterList[currentChapterIndex].file, nextItem);
                 viewer.scrollTop = 0;
@@ -402,49 +401,48 @@
         }
     }
 
-    fetch('assets/novel/index.json')
-        .then(res => res.json())
-        .then(data => {
-            chapterList = data; 
-            listEl.innerHTML = '';
-            data.forEach((item, index) => {
-                const div = document.createElement('div');
-                div.className = 'chapter-item';
-                div.textContent = item.title;
-                div.onclick = (e) => {
-                    e.stopPropagation();
-                    currentChapterIndex = index;
-                    renderPDF('assets/novel/' + item.file, div);
-                    sidebar.classList.add('hidden');
-                    viewer.classList.remove('shifted');
-                };
-                listEl.appendChild(div);
-                if(index === 0) renderPDF('assets/novel/' + item.file, div);
-            });
+    fetch('assets/novel/index.json').then(res => res.json()).then(data => {
+        chapterList = data; 
+        listEl.innerHTML = '';
+        data.forEach((item, index) => {
+            const div = document.createElement('div');
+            div.className = 'chapter-item';
+            div.textContent = item.title;
+            div.onclick = (e) => {
+                e.stopPropagation();
+                currentChapterIndex = index;
+                renderPDF('assets/novel/' + item.file, div);
+                sidebar.classList.add('hidden');
+                viewer.classList.remove('shifted');
+            };
+            listEl.appendChild(div);
+            if(index === 0) renderPDF('assets/novel/' + item.file, div);
         });
+    });
 
+    // --- HÀM RENDER TỐI ƯU HÓA ---
     async function renderPDF(url, element) {
+        currentFileUrl = url;
         document.querySelectorAll('.chapter-item').forEach(el => el.classList.remove('active'));
-        element.classList.add('active');
+        if(element) element.classList.add('active');
         pdfContainer.innerHTML = '<p style="text-align:center; margin-top:50px;">ACCESSING...</p>';
-        viewer.scrollTop = 0;
 
         try {
             const pdf = await pdfjsLib.getDocument(url).promise;
             pdfContainer.innerHTML = '';
-            const dpr = window.devicePixelRatio || 1;
-            const scale = 2.0; 
 
             for (let i = 1; i <= pdf.numPages; i++) {
                 const page = await pdf.getPage(i);
-                const viewport = page.getViewport({ scale: scale });
+                
+                // Render ở scale 2.5 cố định để giữ độ nét cực cao khi zoom CSS
+                const viewport = page.getViewport({ scale: 2.5 });
                 const canvas = document.createElement('canvas');
                 pdfContainer.appendChild(canvas);
                 const context = canvas.getContext('2d');
-                canvas.width = Math.floor(viewport.width * dpr);
-                canvas.height = Math.floor(viewport.height * dpr);
-                canvas.style.width = viewport.width + "px";
-                context.scale(dpr, dpr);
+                
+                canvas.width = viewport.width;
+                canvas.height = viewport.height;
+                
                 await page.render({ canvasContext: context, viewport: viewport }).promise;
             }
         } catch (err) {
