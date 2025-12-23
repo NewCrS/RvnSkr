@@ -70,26 +70,25 @@
         .chapter-item:hover { background: var(--item-hover); }
         .chapter-item.active { background: rgba(59, 130, 246, 0.15); color: var(--accent); border-left: 5px solid var(--accent); font-weight: bold; }
 
-        /* --- THEME SLIDER --- */
-        .sidebar-footer { padding: 20px; border-top: 1px solid var(--border-color); }
-        .theme-switch-container { width: 100%; user-select: none; -webkit-tap-highlight-color: transparent; }
-        .theme-labels { display: flex; justify-content: space-between; font-size: 10px; font-weight: bold; margin-bottom: 8px; opacity: 0.6; text-transform: uppercase; }
+        .sidebar-footer { padding: 25px 20px; border-top: 1px solid var(--border-color); }
+        .theme-switch-container { width: 100%; user-select: none; -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+        .theme-labels { display: flex; justify-content: space-around; font-size: 10px; font-weight: bold; margin-bottom: 8px; opacity: 0.6; text-transform: uppercase; }
         
         .slider-track {
-            width: 100%; height: 24px; background: var(--item-hover);
-            border-radius: 12px; position: relative; cursor: pointer;
+            width: 100%; height: 28px; background: var(--item-hover);
+            border-radius: 14px; position: relative; cursor: pointer;
             border: 1px solid var(--border-color); box-sizing: border-box;
-            outline: none; 
+            outline: none; overflow: hidden; -webkit-tap-highlight-color: transparent;
         }
         .slider-thumb {
-            width: calc(33.33% - 4px); height: 18px; background: var(--accent);
-            border-radius: 10px; position: absolute; top: 2px; left: 2px;
+            width: 33.33%; height: 100%; background: var(--accent);
+            border-radius: 12px; position: absolute; top: 0; left: 0;
             transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             box-shadow: 0 2px 4px rgba(0,0,0,0.2);
             pointer-events: none; 
         }
 
-        [data-theme="light"] .slider-thumb { transform: translateX(0); }
+        [data-theme="light"] .slider-thumb { transform: translateX(0%); }
         [data-theme="dark"] .slider-thumb { transform: translateX(100%); }
         [data-theme="black"] .slider-thumb { transform: translateX(200%); }
 
@@ -119,7 +118,7 @@
             position: relative; z-index: 1;
         }
 
-        /* --- NEXT CHAPTER INDICATOR (MODERN PROGRESS BORDER) --- */
+        /* --- NEXT CHAPTER INDICATOR (UPDATED CHILL & EXPLODE) --- */
         #next-chapter-indicator {
             position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(150px);
             background: var(--accent); color: white; padding: 12px 24px; border-radius: 30px;
@@ -129,12 +128,33 @@
         }
         #next-chapter-indicator.visible { transform: translateX(-50%) translateY(0); opacity: 1; }
         
+        /* Hiệu ứng nén Chill: chậm lúc đầu, cực nhanh và dứt khoát ở cuối */
         #next-chapter-indicator.charging { 
-            animation: shake 0.1s infinite; 
-            background: #10b981; 
+            background: #65aaff; 
+            animation: chill-compress 0.8s cubic-bezier(0.7, 0, 0.3, 1) forwards;
         }
 
-        /* SVG Border Layer */
+        #explosion-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            pointer-events: none;
+            z-index: 9999;
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        .ripple {
+            position: absolute;
+            width: 10px; height: 10px;
+            background: #65aaff;
+            border-radius: 50%;
+            transform: scale(0);
+            opacity: 0;
+        }
+
+        .ripple.active {
+            animation: explode-out 0.8s ease-out forwards;
+        }
+
         #next-chapter-indicator svg {
             position: absolute;
             top: 0; left: 0;
@@ -147,28 +167,34 @@
             fill: none;
             stroke: #ffffff;
             stroke-width: 4;
-            stroke-dasharray: 400; /* Giá trị giả định, sẽ được cập nhật bằng JS */
+            stroke-dasharray: 400;
             stroke-dashoffset: 400;
             stroke-linecap: round;
             transition: none;
         }
 
         #next-chapter-indicator.charging rect {
-            transition: stroke-dashoffset 2s linear;
+            transition: stroke-dashoffset 0.75s cubic-bezier(0.4, 0, 0.2, 1);
             stroke-dashoffset: 0;
         }
 
-        /* Chữ luôn nằm trên hiệu ứng */
         #next-chapter-indicator span {
             position: relative;
             z-index: 3;
         }
 
-        @keyframes shake {
-            0% { transform: translateX(-50%) rotate(0deg); }
-            25% { transform: translateX(-50.5%) rotate(-0.5deg); }
-            75% { transform: translateX(-49.5%) rotate(0.5deg); }
-            100% { transform: translateX(-50%) rotate(0deg); }
+        /* Animation Chill Compress & Snap Explode */
+        @keyframes chill-compress {
+            0% { transform: translateX(-50%) scale(1); filter: blur(0px); }
+            30% { transform: translateX(-50%) scale(1.05, 0.95); filter: blur(0.1px); } /* Co giãn chill */
+            60% { transform: translateX(-50%) scale(0.6, 0.8); opacity: 1; }
+            90% { transform: translateX(-50%) scale(0.1); opacity: 1; filter: blur(0.4px); } /* Nén cực độ */
+            100% { transform: translateX(-50%) scale(0); opacity: 0; filter: blur(0.8px); } /* Biến mất dứt khoát */
+        }
+
+        @keyframes explode-out {
+            0% { transform: scale(0); opacity: 1; }
+            100% { transform: scale(500); opacity: 0; }
         }
 
         @media (max-width: 768px) {
@@ -211,6 +237,8 @@
     <span>Vuốt và giữ để sang tập kế tiếp</span>
 </div>
 
+<div id="explosion-overlay"><div class="ripple" id="ripple"></div></div>
+
 <script>
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
 
@@ -222,13 +250,13 @@
     const pdfContainer = document.getElementById('pdf-container');
     const nextIndicator = document.getElementById('next-chapter-indicator');
     const progressRect = nextIndicator.querySelector('rect');
+    const ripple = document.getElementById('ripple');
 
     let chapterList = [];
     let currentChapterIndex = 0;
     let holdTimer = null;
     let isChangingChapter = false;
 
-    // --- Cập nhật chu vi viền để hiệu ứng chạy đúng 1 vòng ---
     function updateStrokeArray() {
         const w = nextIndicator.offsetWidth;
         const h = nextIndicator.offsetHeight;
@@ -237,7 +265,6 @@
         progressRect.style.strokeDashoffset = perimeter;
     }
 
-    // --- THEME LOGIC ---
     const themes = ['light', 'dark', 'black'];
     let currentTheme = localStorage.getItem('theme') || 'light';
     const applyTheme = (theme) => {
@@ -250,13 +277,13 @@
     themeTrack.onclick = (e) => {
         const rect = themeTrack.getBoundingClientRect();
         const x = e.clientX - rect.left;
-        const section = rect.width / 3;
-        if (x < section) applyTheme('light');
-        else if (x < section * 2) applyTheme('dark');
+        const percent = (x / rect.width) * 100;
+        
+        if (percent < 33.33) applyTheme('light');
+        else if (percent < 66.66) applyTheme('dark');
         else applyTheme('black');
     };
 
-    // --- SIDEBAR LOGIC ---
     menuBtn.onclick = (e) => {
         const isHidden = sidebar.classList.toggle('hidden');
         if (!isHidden && window.innerWidth > 768) viewer.classList.add('shifted');
@@ -269,7 +296,6 @@
         viewer.classList.remove('shifted');
     };
 
-    // --- SCROLL LOGIC ---
     viewer.addEventListener('scroll', () => {
         if (isChangingChapter) return;
         const scrollPos = viewer.scrollTop;
@@ -279,13 +305,10 @@
             nextIndicator.classList.add('visible');
             updateStrokeArray();
         } else {
-            if (!holdTimer) {
-                nextIndicator.classList.remove('visible');
-            }
+            if (!holdTimer) nextIndicator.classList.remove('visible');
         }
     }, { passive: true });
 
-    // --- RUBBER-BAND & PULL-TO-NEXT LOGIC ---
     let startY = 0;
     const damping = 0.4; 
 
@@ -297,7 +320,6 @@
 
     viewer.addEventListener('touchmove', (e) => {
         if (isChangingChapter) return;
-
         const touchY = e.touches[0].pageY;
         const diff = touchY - startY; 
         const scrollPos = viewer.scrollTop;
@@ -314,21 +336,14 @@
 
             if (absDiff > 70 && currentChapterIndex < chapterList.length - 1) {
                 nextIndicator.classList.add('visible');
-                
                 if (!holdTimer) {
-                    updateStrokeArray(); // Đảm bảo viền khớp kích thước nút hiện tại
+                    updateStrokeArray();
                     nextIndicator.classList.add('charging');
-                    if (window.navigator.vibrate) window.navigator.vibrate(50);
-                    holdTimer = setTimeout(goToNextChapter, 800);
+                    if (window.navigator.vibrate) window.navigator.vibrate([20, 40, 60]);
+                    holdTimer = setTimeout(triggerExplosion, 800);
                 }
             } else if (absDiff < 40) {
-                if (holdTimer) { 
-                    clearTimeout(holdTimer); 
-                    holdTimer = null;
-                    nextIndicator.classList.remove('charging');
-                    const perimeter = progressRect.style.strokeDasharray;
-                    progressRect.style.strokeDashoffset = perimeter;
-                }
+                resetHold();
             }
         }
     }, { passive: true });
@@ -337,24 +352,39 @@
         if (!isChangingChapter) {
             pdfContainer.style.transition = 'transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
             pdfContainer.style.transform = 'translateY(0)';
-            
-            if (holdTimer) {
-                clearTimeout(holdTimer);
-                holdTimer = null;
-                nextIndicator.classList.remove('charging');
-                const perimeter = progressRect.style.strokeDasharray;
-                progressRect.style.strokeDashoffset = perimeter;
-            }
+            resetHold();
         }
     });
 
+    function resetHold() {
+        if (holdTimer) {
+            clearTimeout(holdTimer);
+            holdTimer = null;
+            nextIndicator.classList.remove('charging');
+            progressRect.style.strokeDashoffset = progressRect.style.strokeDasharray;
+        }
+    }
+
+    function triggerExplosion() {
+        isChangingChapter = true;
+        const rect = nextIndicator.getBoundingClientRect();
+        ripple.style.left = (rect.left + rect.width / 2) + 'px';
+        ripple.style.top = (rect.top + rect.height / 2) + 'px';
+        
+        ripple.classList.add('active');
+        if (window.navigator.vibrate) window.navigator.vibrate(150);
+
+        setTimeout(() => {
+            goToNextChapter();
+            setTimeout(() => {
+                ripple.classList.remove('active');
+            }, 500);
+        }, 0);
+    }
+
     function goToNextChapter() {
         if (currentChapterIndex < chapterList.length - 1) {
-            isChangingChapter = true;
             currentChapterIndex++;
-            
-            if (window.navigator.vibrate) window.navigator.vibrate(100);
-            
             nextIndicator.classList.remove('visible', 'charging');
             pdfContainer.style.transform = 'translateY(0)';
             viewer.style.opacity = '0';
@@ -367,12 +397,11 @@
                 setTimeout(() => { 
                     viewer.style.opacity = '1'; 
                     isChangingChapter = false;
-                }, 300);
-            }, 400);
+                }, 320);
+            },200);
         }
     }
 
-    // --- DATA LOADING ---
     fetch('assets/novel/index.json')
         .then(res => res.json())
         .then(data => {
@@ -392,16 +421,12 @@
                 listEl.appendChild(div);
                 if(index === 0) renderPDF('assets/novel/' + item.file, div);
             });
-        })
-        .catch(err => {
-            listEl.innerHTML = '<div style="padding:20px; color:red;">Error loading index.json</div>';
         });
 
     async function renderPDF(url, element) {
         document.querySelectorAll('.chapter-item').forEach(el => el.classList.remove('active'));
         element.classList.add('active');
-        
-        pdfContainer.innerHTML = '<p style="text-align:center; margin-top:50px;">ACCESSING DATA...</p>';
+        pdfContainer.innerHTML = '<p style="text-align:center; margin-top:50px;">ACCESSING...</p>';
         viewer.scrollTop = 0;
 
         try {
@@ -415,12 +440,10 @@
                 const viewport = page.getViewport({ scale: scale });
                 const canvas = document.createElement('canvas');
                 pdfContainer.appendChild(canvas);
-                
                 const context = canvas.getContext('2d');
                 canvas.width = Math.floor(viewport.width * dpr);
                 canvas.height = Math.floor(viewport.height * dpr);
                 canvas.style.width = viewport.width + "px";
-
                 context.scale(dpr, dpr);
                 await page.render({ canvasContext: context, viewport: viewport }).promise;
             }
@@ -429,6 +452,5 @@
         }
     }
 </script>
-
 </body>
 </html>
