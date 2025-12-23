@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>REVENANTSKR :: NOVEL ARCHIVE</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body{
+    margin:0;
+    background:#050505;
+    color:#00BBFF;
+    font-family:Arial, sans-serif;
+}
+.archive{
+    max-width:900px;
+    margin:80px auto;
+    padding:20px;
+}
+.item{
+    padding:18px;
+    margin:14px 0;
+    border:1px solid #00bbff33;
+    cursor:pointer;
+}
+.item:hover{
+    background:#00bbff22;
+}
+.title{
+    font-weight:bold;
+    letter-spacing:1px;
+}
+.meta{
+    font-size:12px;
+    color:#888;
+    margin-top:6px;
+}
+.error{
+    color:#fff;
+    text-align:center;
+    margin-top:120px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="archive" id="archive"></div>
+
+<script>
+fetch("index.json")   // ⚠️ CHỈ DÙNG ĐƯỜNG DẪN NÀY
+.then(res => {
+    if (!res.ok) throw new Error("INDEX.JSON NOT FOUND");
+    return res.json();
+})
+.then(list => {
+    if (!Array.isArray(list) || list.length === 0) {
+        document.body.innerHTML =
+          "<div class='error'>NO ARCHIVE FOUND</div>";
+        return;
+    }
+
+    const box = document.getElementById("archive");
+    list.forEach(n => {
+        const div = document.createElement("div");
+        div.className = "item";
+        div.innerHTML = `
+          <div class="title">[ARCHIVE] ${n.title}</div>
+          <div class="meta">${n.type.toUpperCase()}</div>
+        `;
+        div.onclick = () => {
+            window.location.href =
+              `../../novel.html?file=${encodeURIComponent(n.file)}&type=${n.type}`;
+        };
+        box.appendChild(div);
+    });
+})
+.catch(err => {
+    console.error(err);
+    document.body.innerHTML =
+      "<div class='error'>NO ARCHIVE FOUND<br>CHECK index.json</div>";
+});
+</script>
+
+</body>
+</html>
