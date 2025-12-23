@@ -133,10 +133,9 @@
             display: block; width: 100%; height: auto !important; 
             filter: var(--pdf-filter); transition: filter 0.3s ease; 
             image-rendering: -webkit-optimize-contrast;
-            clip-path: inset(8% 0 11% 0);
-            /* Khoảng cách âm tỉ lệ % theo chiều rộng giúp trang luôn khít khi zoom */
-            margin-top: -20%; 
-            margin-bottom: -20%;
+            clip-path: inset(6% 0 9% 0); 
+            margin-top: -21.1%; 
+            margin-bottom: -21.1%; 
             position: relative; z-index: 1;
         }
         canvas:first-child { margin-top: 0; }
@@ -172,14 +171,22 @@
         }
 
         @keyframes explode-out { 0% { transform: scale(0); opacity: 1; } 100% { transform: scale(500); opacity: 0; } }
+@media (max-width: 768px) {
+    #sidebar { width: 40%; } /* Tăng chiều rộng menu trên mobile cho dễ bấm */
+    #main-viewer.shifted { padding-left: 0; }
+    #menu-toggle { font-size: 26px; top: 8px; left: 8px; }
+    #pdf-container { margin-top: 50px; }
 
-        @media (max-width: 768px) {
-            #sidebar { width: 40%; } 
-            #main-viewer.shifted { padding-left: 0; }
-            #menu-toggle { font-size: 26px; top: 8px; left: 8px; }
-            #pdf-container { margin-top: 50px; }
-            canvas { clip-path: inset(6% 0 9% 0); margin-top: -15.5%; margin-bottom: -15.5%; }
+    /* Chỉ áp dụng cấu hình cắt sâu cho màn hình DỌC của mobile */
+    @media (orientation: portrait) {
+        canvas { 
+            clip-path: inset(6% 0 9% 0); 
+            margin-top: -21.1%; 
+            margin-bottom: -21.1%; 
         }
+    }
+}
+
     </style>
 </head>
 <body>
