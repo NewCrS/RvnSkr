@@ -1,8 +1,9 @@
+</html>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Rvn Light Novel - Premium Reader</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
     <style>
@@ -45,19 +46,21 @@
             overflow: hidden; transition: background 0.3s ease; 
         }
 
+        /* --- UI CONTROLS --- */
         #menu-toggle {
-            position: fixed; top: 12px; left: 12px; z-index: 1100;
+            position: fixed; top: 12px; left: 12px; z-index: 18000;
             background: transparent; color: var(--btn-toggle-color);
             border: none; font-size: 30px; cursor: pointer; padding: 5px; line-height: 1; 
             outline: none; -webkit-tap-highlight-color: transparent;
         }
 
+        /* --- SIDEBAR --- */
         #sidebar { 
             position: fixed; top: 0; left: 0; bottom: 0;
             width: var(--sidebar-w); background: var(--bg-sidebar); 
             overflow: hidden; display: flex; flex-direction: column;
             transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1), background 0.3s ease;
-            z-index: 1000; border-right: 1px solid var(--border-color);
+            z-index: 8000; border-right: 1px solid var(--border-color);
         }
         #sidebar.hidden { transform: translateX(-100%); }
 
@@ -67,6 +70,7 @@
         .chapter-item:hover { background: var(--item-hover); }
         .chapter-item.active { background: rgba(59, 130, 246, 0.15); color: var(--accent); border-left: 5px solid var(--accent); font-weight: bold; }
 
+        /* --- THEME SLIDER --- */
         .sidebar-footer { padding: 20px; border-top: 1px solid var(--border-color); }
         .theme-switch-container { width: 100%; user-select: none; -webkit-tap-highlight-color: transparent; }
         .theme-labels { display: flex; justify-content: space-between; font-size: 10px; font-weight: bold; margin-bottom: 8px; opacity: 0.6; text-transform: uppercase; }
@@ -89,36 +93,82 @@
         [data-theme="dark"] .slider-thumb { transform: translateX(100%); }
         [data-theme="black"] .slider-thumb { transform: translateX(200%); }
 
+        /* --- MAIN VIEWER --- */
         #main-viewer { 
             width: 100%; height: 100vh; overflow-y: auto; 
             display: flex; flex-direction: column; align-items: center; 
-            background: var(--bg-main); transition: padding-left 0.4s ease, background 0.3s ease;
+            background: var(--bg-main); transition: padding-left 0.4s ease, background 0.3s ease, opacity 0.4s ease;
+            overscroll-behavior-y: none; 
+            -webkit-overflow-scrolling: touch;
         }
         #main-viewer.shifted { padding-left: var(--sidebar-w); }
 
         #pdf-container { 
             width: 100%; max-width: 850px; margin: 0 auto; padding: 0; 
             box-sizing: border-box; line-height: 0; 
+            will-change: transform; 
+            transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
         }
 
         canvas { 
-            display: block; 
-            max-width: 100%; height: auto !important; 
-            filter: var(--pdf-filter);
-            transition: filter 0.3s ease; 
+            display: block; max-width: 100%; height: auto !important; 
+            filter: var(--pdf-filter); transition: filter 0.3s ease; 
             image-rendering: -webkit-optimize-contrast;
-
-        
-            border: 1px solid #ffffffff; 
-
-        
             clip-path: inset(8% 0 11% 0);
-            
-        
             margin: -24% auto; 
-            
+            position: relative; z-index: 1;
+        }
+
+        /* --- NEXT CHAPTER INDICATOR (MODERN PROGRESS BORDER) --- */
+        #next-chapter-indicator {
+            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(150px);
+            background: var(--accent); color: white; padding: 12px 24px; border-radius: 30px;
+            font-size: 0.9rem; font-weight: bold; transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s, background 0.3s;
+            z-index: 2000; opacity: 0; pointer-events: none; box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+            white-space: nowrap;
+        }
+        #next-chapter-indicator.visible { transform: translateX(-50%) translateY(0); opacity: 1; }
+        
+        #next-chapter-indicator.charging { 
+            animation: shake 0.1s infinite; 
+            background: #10b981; 
+        }
+
+        /* SVG Border Layer */
+        #next-chapter-indicator svg {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none;
+            overflow: visible;
+        }
+
+        #next-chapter-indicator rect {
+            fill: none;
+            stroke: #ffffff;
+            stroke-width: 4;
+            stroke-dasharray: 400; /* Giá trị giả định, sẽ được cập nhật bằng JS */
+            stroke-dashoffset: 400;
+            stroke-linecap: round;
+            transition: none;
+        }
+
+        #next-chapter-indicator.charging rect {
+            transition: stroke-dashoffset 2s linear;
+            stroke-dashoffset: 0;
+        }
+
+        /* Chữ luôn nằm trên hiệu ứng */
+        #next-chapter-indicator span {
             position: relative;
-            z-index: 1;
+            z-index: 3;
+        }
+
+        @keyframes shake {
+            0% { transform: translateX(-50%) rotate(0deg); }
+            25% { transform: translateX(-50.5%) rotate(-0.5deg); }
+            75% { transform: translateX(-49.5%) rotate(0.5deg); }
+            100% { transform: translateX(-50%) rotate(0deg); }
         }
 
         @media (max-width: 768px) {
@@ -126,10 +176,7 @@
             #main-viewer.shifted { padding-left: 0; }
             #menu-toggle { font-size: 26px; top: 8px; left: 8px; }
             #pdf-container { margin-top: 50px; }
-            canvas { 
-                clip-path: inset(6% 0 9% 0);
-                margin: -20% auto; 
-            }
+            canvas { clip-path: inset(6% 0 9% 0); margin: -20% auto; }
         }
     </style>
 </head>
@@ -159,6 +206,11 @@
     <div id="pdf-container"></div>
 </div>
 
+<div id="next-chapter-indicator">
+    <svg><rect x="0" y="0" width="100%" height="100%" rx="30" ry="30"></rect></svg>
+    <span>Vuốt và giữ để sang tập kế tiếp</span>
+</div>
+
 <script>
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
 
@@ -168,28 +220,43 @@
     const themeTrack = document.getElementById('theme-track');
     const listEl = document.getElementById('list');
     const pdfContainer = document.getElementById('pdf-container');
+    const nextIndicator = document.getElementById('next-chapter-indicator');
+    const progressRect = nextIndicator.querySelector('rect');
 
+    let chapterList = [];
+    let currentChapterIndex = 0;
+    let holdTimer = null;
+    let isChangingChapter = false;
+
+    // --- Cập nhật chu vi viền để hiệu ứng chạy đúng 1 vòng ---
+    function updateStrokeArray() {
+        const w = nextIndicator.offsetWidth;
+        const h = nextIndicator.offsetHeight;
+        const perimeter = (w + h) * 2;
+        progressRect.style.strokeDasharray = perimeter;
+        progressRect.style.strokeDashoffset = perimeter;
+    }
+
+    // --- THEME LOGIC ---
     const themes = ['light', 'dark', 'black'];
     let currentTheme = localStorage.getItem('theme') || 'light';
-
     const applyTheme = (theme) => {
         document.documentElement.setAttribute('data-theme', theme);
         localStorage.setItem('theme', theme);
         currentTheme = theme;
     };
-
     applyTheme(currentTheme);
 
     themeTrack.onclick = (e) => {
         const rect = themeTrack.getBoundingClientRect();
         const x = e.clientX - rect.left;
         const section = rect.width / 3;
-
         if (x < section) applyTheme('light');
         else if (x < section * 2) applyTheme('dark');
         else applyTheme('black');
     };
 
+    // --- SIDEBAR LOGIC ---
     menuBtn.onclick = (e) => {
         const isHidden = sidebar.classList.toggle('hidden');
         if (!isHidden && window.innerWidth > 768) viewer.classList.add('shifted');
@@ -202,9 +269,114 @@
         viewer.classList.remove('shifted');
     };
 
+    // --- SCROLL LOGIC ---
+    viewer.addEventListener('scroll', () => {
+        if (isChangingChapter) return;
+        const scrollPos = viewer.scrollTop;
+        const maxScroll = viewer.scrollHeight - viewer.clientHeight;
+        
+        if (scrollPos >= maxScroll - 50 && currentChapterIndex < chapterList.length - 1) {
+            nextIndicator.classList.add('visible');
+            updateStrokeArray();
+        } else {
+            if (!holdTimer) {
+                nextIndicator.classList.remove('visible');
+            }
+        }
+    }, { passive: true });
+
+    // --- RUBBER-BAND & PULL-TO-NEXT LOGIC ---
+    let startY = 0;
+    const damping = 0.4; 
+
+    viewer.addEventListener('touchstart', (e) => {
+        startY = e.touches[0].pageY;
+        pdfContainer.style.transition = 'none';
+        if (holdTimer) { clearTimeout(holdTimer); holdTimer = null; }
+    }, { passive: true });
+
+    viewer.addEventListener('touchmove', (e) => {
+        if (isChangingChapter) return;
+
+        const touchY = e.touches[0].pageY;
+        const diff = touchY - startY; 
+        const scrollPos = viewer.scrollTop;
+        const maxScroll = viewer.scrollHeight - viewer.clientHeight;
+
+        if (scrollPos <= 0 && diff > 0) {
+            let translate = Math.pow(diff, 0.8) * damping;
+            pdfContainer.style.transform = `translateY(${translate}px)`;
+        } 
+        else if (scrollPos >= maxScroll - 2 && diff < 0) {
+            let absDiff = Math.abs(diff);
+            let translate = -Math.pow(absDiff, 0.8) * damping;
+            pdfContainer.style.transform = `translateY(${translate}px)`;
+
+            if (absDiff > 70 && currentChapterIndex < chapterList.length - 1) {
+                nextIndicator.classList.add('visible');
+                
+                if (!holdTimer) {
+                    updateStrokeArray(); // Đảm bảo viền khớp kích thước nút hiện tại
+                    nextIndicator.classList.add('charging');
+                    if (window.navigator.vibrate) window.navigator.vibrate(50);
+                    holdTimer = setTimeout(goToNextChapter, 800);
+                }
+            } else if (absDiff < 40) {
+                if (holdTimer) { 
+                    clearTimeout(holdTimer); 
+                    holdTimer = null;
+                    nextIndicator.classList.remove('charging');
+                    const perimeter = progressRect.style.strokeDasharray;
+                    progressRect.style.strokeDashoffset = perimeter;
+                }
+            }
+        }
+    }, { passive: true });
+
+    viewer.addEventListener('touchend', () => {
+        if (!isChangingChapter) {
+            pdfContainer.style.transition = 'transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+            pdfContainer.style.transform = 'translateY(0)';
+            
+            if (holdTimer) {
+                clearTimeout(holdTimer);
+                holdTimer = null;
+                nextIndicator.classList.remove('charging');
+                const perimeter = progressRect.style.strokeDasharray;
+                progressRect.style.strokeDashoffset = perimeter;
+            }
+        }
+    });
+
+    function goToNextChapter() {
+        if (currentChapterIndex < chapterList.length - 1) {
+            isChangingChapter = true;
+            currentChapterIndex++;
+            
+            if (window.navigator.vibrate) window.navigator.vibrate(100);
+            
+            nextIndicator.classList.remove('visible', 'charging');
+            pdfContainer.style.transform = 'translateY(0)';
+            viewer.style.opacity = '0';
+            
+            const nextItem = document.querySelectorAll('.chapter-item')[currentChapterIndex];
+            
+            setTimeout(() => {
+                renderPDF('assets/novel/' + chapterList[currentChapterIndex].file, nextItem);
+                viewer.scrollTop = 0;
+                setTimeout(() => { 
+                    viewer.style.opacity = '1'; 
+                    isChangingChapter = false;
+                }, 300);
+            }, 400);
+        }
+    }
+
+    // --- DATA LOADING ---
     fetch('assets/novel/index.json')
         .then(res => res.json())
         .then(data => {
+            chapterList = data; 
             listEl.innerHTML = '';
             data.forEach((item, index) => {
                 const div = document.createElement('div');
@@ -212,6 +384,7 @@
                 div.textContent = item.title;
                 div.onclick = (e) => {
                     e.stopPropagation();
+                    currentChapterIndex = index;
                     renderPDF('assets/novel/' + item.file, div);
                     sidebar.classList.add('hidden');
                     viewer.classList.remove('shifted');
