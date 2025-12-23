@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trình Đọc Truyện PDF Sắc Nét</title>
+    <title>Trình Đọc Truyện PDF Cao Cấp</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
     <style>
         :root { 
-            --sidebar-w: 280px; 
+            --sidebar-w: 300px; 
             --accent: #3b82f6; 
             --bg-main: #ffffff;
             --bg-sidebar: #ffffff;
@@ -19,78 +19,99 @@
         }
 
         [data-theme="dark"] {
-            --bg-main: #1a1a1a;
-            --bg-sidebar: #252525;
+            --bg-main: #121212;
+            --bg-sidebar: #1e1e1e;
             --text-color: #e0e0e0;
-            --item-hover: #333333;
-            --border-color: #444444;
+            --item-hover: #2d2d2d;
+            --border-color: #333333;
             --btn-toggle-color: rgba(255, 255, 255, 0.8);
-            /* Bộ lọc đảo màu PDF thông minh */
             --pdf-filter: invert(0.9) hue-rotate(180deg) brightness(1.1) contrast(1.1);
         }
 
-        body { margin: 0; display: flex; height: 100vh; font-family: -apple-system, sans-serif; background: var(--bg-main); color: var(--text-color); overflow: hidden; transition: background 0.3s; }
+        body { 
+            margin: 0; 
+            display: flex; 
+            height: 100vh; 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+            background: var(--bg-main); 
+            color: var(--text-color); 
+            overflow: hidden; 
+            transition: background 0.3s ease; 
+        }
         
-        /* Nút 3 gạch đen trong suốt */
+        /* Nút 3 gạch */
         #menu-toggle {
-            position: fixed; top: 10px; left: 15px; z-index: 1000;
+            position: fixed; top: 15px; left: 15px; z-index: 1100;
             background: transparent; color: var(--btn-toggle-color);
-            border: none; font-size: 35px; cursor: pointer; padding: 5px; line-height: 1; transition: 0.3s; user-select: none;
+            border: none; font-size: 35px; cursor: pointer; padding: 5px; line-height: 1; 
+            transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); user-select: none;
         }
-        #menu-toggle:hover { transform: scale(1.1); }
+        #menu-toggle:hover { transform: scale(1.1); color: var(--accent); }
 
-        /* Sidebar */
+        /* Sidebar cố định - Không đẩy nội dung truyện */
         #sidebar { 
+            position: fixed; top: 0; left: 0; bottom: 0;
             width: var(--sidebar-w); background: var(--bg-sidebar); 
-            overflow: hidden; flex-shrink: 0; display: flex; flex-direction: column;
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            z-index: 999; border-right: 1px solid var(--border-color);
+            overflow: hidden; display: flex; flex-direction: column;
+            transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+            z-index: 1000; border-right: 1px solid var(--border-color);
+            box-shadow: 10px 0 30px rgba(0,0,0,0.05);
+            will-change: transform;
         }
-        #sidebar.hidden { transform: translateX(-100%); position: absolute; height: 100%; }
+        #sidebar.hidden { transform: translateX(-100%); box-shadow: none; }
 
-        .sidebar-header { padding: 60px 20px 20px; font-weight: bold; border-bottom: 1px solid var(--border-color); font-size: 1.1rem; }
-        #list { flex-grow: 1; overflow-y: auto; }
+        .sidebar-header { padding: 70px 25px 20px; font-weight: bold; border-bottom: 1px solid var(--border-color); font-size: 1.2rem; letter-spacing: 0.5px; }
+        #list { flex-grow: 1; overflow-y: auto; scrollbar-width: thin; }
 
-        .chapter-item { padding: 15px 20px; border-bottom: 1px solid var(--border-color); cursor: pointer; color: var(--text-color); transition: 0.2s; }
+        .chapter-item { padding: 18px 25px; border-bottom: 1px solid var(--border-color); cursor: pointer; color: var(--text-color); transition: 0.2s; font-size: 0.95rem; }
         .chapter-item:hover { background: var(--item-hover); color: var(--accent); }
-        .chapter-item.active { background: rgba(59, 130, 246, 0.1); color: var(--accent); border-left: 4px solid var(--accent); font-weight: bold; }
+        .chapter-item.active { background: rgba(59, 130, 246, 0.12); color: var(--accent); border-left: 5px solid var(--accent); font-weight: bold; }
 
-        .sidebar-footer { padding: 15px; border-top: 1px solid var(--border-color); }
+        .sidebar-footer { padding: 20px; border-top: 1px solid var(--border-color); background: var(--bg-sidebar); }
         #theme-btn {
             width: 100%; padding: 12px; border: 1px solid var(--border-color);
             background: var(--bg-sidebar); color: var(--text-color);
-            border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: 0.3s;
+            border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 12px; font-weight: 500; transition: 0.3s;
         }
+        #theme-btn:hover { border-color: var(--accent); background: var(--item-hover); }
 
         /* Viewer Area */
-        #main-viewer { flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; align-items: center; background: var(--bg-main); transition: background 0.3s; }
-        #pdf-render-container { width: 100%; max-width: 950px; margin-top: 20px; padding: 0 10px; box-sizing: border-box; }
+        #main-viewer { 
+            width: 100%; height: 100vh;
+            overflow-y: auto; display: flex; flex-direction: column; align-items: center; 
+            background: var(--bg-main); transition: background 0.3s ease; 
+            scrollbar-gutter: stable;
+        }
+        #pdf-render-container { width: 100%; max-width: 900px; margin: 20px 0; padding: 0 15px; box-sizing: border-box; }
         
-        /* Canvas hiển thị PDF */
+        /* Canvas PDF Sắc Nét */
         canvas { 
-            display: block; margin: 0 auto 20px; 
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1); 
+            display: block; margin: 0 auto 30px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.12); 
             max-width: 100%; height: auto !important; 
             filter: var(--pdf-filter);
-            transition: filter 0.3s ease;
-            background: white; /* Đảm bảo có nền trắng trước khi lọc */
+            background: white;
+            transition: filter 0.4s ease;
+            /* Khử mờ tuyệt đối */
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: crisp-edges;
         }
         
-        #loading { color: var(--text-color); margin-top: 100px; font-size: 0.9rem; font-weight: bold; letter-spacing: 1px; }
+        #loading { color: var(--text-color); margin-top: 120px; font-size: 1rem; font-weight: 600; text-transform: uppercase; opacity: 0.7; }
 
         @media (max-width: 768px) {
-            #sidebar { position: absolute; height: 100%; box-shadow: 10px 0 30px rgba(0,0,0,0.2); }
-            #pdf-render-container { margin-top: 60px; }
+            #pdf-render-container { margin-top: 70px; }
+            --sidebar-w: 85%;
         }
     </style>
 </head>
 <body>
 
-<button id="menu-toggle">☰</button>
+<button id="menu-toggle" title="Mở danh sách">☰</button>
 
 <div id="sidebar" class="hidden">
     <div class="sidebar-header">DANH SÁCH TẬP</div>
-    <div id="list">Đang tải danh sách...</div>
+    <div id="list">Đang quét dữ liệu...</div>
     <div class="sidebar-footer">
         <button id="theme-btn">
             <span id="theme-icon">🌙</span> <span id="theme-text">Chế độ tối</span>
@@ -99,12 +120,11 @@
 </div>
 
 <div id="main-viewer">
-    <div id="loading" style="display: none;">ĐANG XỬ LÝ NỘI DUNG...</div>
+    <div id="loading" style="display: none;">Đang tối ưu độ nét...</div>
     <div id="pdf-render-container"></div>
 </div>
 
 <script>
-    // Chỉ định Worker đúng phiên bản
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
 
     const sidebar = document.getElementById('sidebar');
@@ -116,7 +136,7 @@
     const container = document.getElementById('pdf-render-container');
     const loadingStatus = document.getElementById('loading');
 
-    // 1. Quản lý Chủ đề (Theme)
+    // Quản lý Giao diện
     const savedTheme = localStorage.getItem('theme') || 'light';
     document.documentElement.setAttribute('data-theme', savedTheme);
     updateThemeUI(savedTheme);
@@ -130,26 +150,21 @@
     };
 
     function updateThemeUI(theme) {
-        if (theme === 'dark') {
-            themeIcon.innerText = '☀️';
-            themeText.innerText = 'Chế độ sáng';
-        } else {
-            themeIcon.innerText = '🌙';
-            themeText.innerText = 'Chế độ tối';
-        }
+        themeIcon.innerText = theme === 'dark' ? '☀️' : '🌙';
+        themeText.innerText = theme === 'dark' ? 'Chế độ sáng' : 'Chế độ tối';
     }
 
-    // 2. Điều hướng Menu
+    // Xử lý Menu mượt mà
     menuToggle.onclick = (e) => {
         sidebar.classList.toggle('hidden');
         e.stopPropagation();
     };
 
     document.getElementById('main-viewer').onclick = () => {
-        if (window.innerWidth <= 768) sidebar.classList.add('hidden');
+        if (!sidebar.classList.contains('hidden')) sidebar.classList.add('hidden');
     };
 
-    // 3. Tải danh sách từ index.json
+    // Nạp danh sách truyện
     fetch('assets/novel/index.json')
         .then(res => res.json())
         .then(data => {
@@ -158,26 +173,21 @@
                 const div = document.createElement('div');
                 div.className = 'chapter-item';
                 div.textContent = item.title;
-                div.onclick = () => {
+                div.onclick = (e) => {
+                    e.stopPropagation();
                     loadPDF('assets/novel/' + item.file, div);
-                    if (window.innerWidth <= 768) sidebar.classList.add('hidden');
+                    sidebar.classList.add('hidden');
                 };
                 listEl.appendChild(div);
-                // Load file đầu tiên mặc định
                 if(index === 0) loadPDF('assets/novel/' + item.file, div);
             });
-        })
-        .catch(err => {
-            listEl.innerHTML = '<div style="padding:20px; color:red;">Lỗi tải dữ liệu.</div>';
         });
 
-    // 4. Hàm vẽ PDF sắc nét (Hi-DPI support)
+    // Hàm render PDF siêu nét
     async function loadPDF(url, element) {
-        // Highlight chương đang chọn
         document.querySelectorAll('.chapter-item').forEach(el => el.classList.remove('active'));
         element.classList.add('active');
         
-        // Reset container & Scroll
         container.innerHTML = '';
         loadingStatus.style.display = 'block';
         document.getElementById('main-viewer').scrollTop = 0;
@@ -186,37 +196,41 @@
             const pdf = await pdfjsLib.getDocument(url).promise;
             loadingStatus.style.display = 'none';
 
-            // Lấy tỉ lệ mật độ điểm ảnh của màn hình (ví dụ Retina = 2)
+            // Dùng tỉ lệ điểm ảnh cao (DPR)
             const dpr = window.devicePixelRatio || 1;
+            // Tăng scale lên 2.0 - 2.2 để nạp dữ liệu chi tiết hơn
+            const baseScale = 2.2; 
 
             for (let i = 1; i <= pdf.numPages; i++) {
                 const page = await pdf.getPage(i);
-                
-                // Tăng scale thêm 20% (1.5 -> 1.8)
-                const baseScale = 1.8;
                 const viewport = page.getViewport({ scale: baseScale });
                 
                 const canvas = document.createElement('canvas');
                 container.appendChild(canvas);
                 const context = canvas.getContext('2d');
 
-                // Kỹ thuật xử lý sắc nét: 
-                // Nhân đôi kích thước vẽ thực tế, sau đó dùng CSS thu nhỏ lại
-                canvas.width = viewport.width * dpr;
-                canvas.height = viewport.height * dpr;
+                // Tăng kích thước vẽ nội bộ dựa trên DPR
+                canvas.width = Math.floor(viewport.width * dpr);
+                canvas.height = Math.floor(viewport.height * dpr);
+                
+                // Ép kích thước hiển thị chuẩn theo CSS
                 canvas.style.width = viewport.width + "px";
-                canvas.style.height = viewport.height + "px";
+                canvas.style.height = "auto";
 
+                // Khử mờ nội bộ context
+                context.imageSmoothingEnabled = false;
+                context.webkitImageSmoothingEnabled = false;
                 context.scale(dpr, dpr);
 
                 await page.render({
                     canvasContext: context,
-                    viewport: viewport
+                    viewport: viewport,
+                    intent: 'print' // Ép PDF.js sử dụng bộ dựng hình chất lượng in ấn
                 }).promise;
             }
         } catch (err) {
+            loadingStatus.innerText = "LỖI NẠP FILE TRUYỆN.";
             console.error(err);
-            loadingStatus.innerText = "KHÔNG THỂ MỞ FILE PDF. HÃY KIỂM TRA TÊN FILE TRÊN GITHUB!";
         }
     }
 </script>
