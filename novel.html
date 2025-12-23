@@ -1,3 +1,4 @@
+</html>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -29,26 +30,20 @@
         }
 
         body { 
-            margin: 0; 
-            display: flex; 
-            height: 100vh; 
+            margin: 0; display: flex; height: 100vh; 
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
-            background: var(--bg-main); 
-            color: var(--text-color); 
-            overflow: hidden; 
-            transition: background 0.3s ease; 
+            background: var(--bg-main); color: var(--text-color); 
+            overflow: hidden; transition: background 0.3s ease; 
         }
-        
+
         /* Nút 3 gạch */
         #menu-toggle {
-            position: fixed; top: 15px; left: 15px; z-index: 1100;
+            position: fixed; top: 10px; left: 10px; z-index: 1100;
             background: transparent; color: var(--btn-toggle-color);
-            border: none; font-size: 35px; cursor: pointer; padding: 5px; line-height: 1; 
-            transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); user-select: none;
+            border: none; font-size: 30px; cursor: pointer; padding: 5px; line-height: 1; 
         }
-        #menu-toggle:hover { transform: scale(1.1); color: var(--accent); }
 
-        /* Sidebar cố định - Không đẩy nội dung truyện */
+        /* Sidebar */
         #sidebar { 
             position: fixed; top: 0; left: 0; bottom: 0;
             width: var(--sidebar-w); background: var(--bg-sidebar); 
@@ -56,52 +51,60 @@
             transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
             z-index: 1000; border-right: 1px solid var(--border-color);
             box-shadow: 10px 0 30px rgba(0,0,0,0.05);
-            will-change: transform;
         }
-        #sidebar.hidden { transform: translateX(-100%); box-shadow: none; }
+        #sidebar.hidden { transform: translateX(-100%); }
 
-        .sidebar-header { padding: 70px 25px 20px; font-weight: bold; border-bottom: 1px solid var(--border-color); font-size: 1.2rem; letter-spacing: 0.5px; }
-        #list { flex-grow: 1; overflow-y: auto; scrollbar-width: thin; }
+        .sidebar-header { padding: 60px 20px 15px; font-weight: bold; border-bottom: 1px solid var(--border-color); font-size: 1.1rem; }
+        #list { flex-grow: 1; overflow-y: auto; }
+        .chapter-item { padding: 15px 20px; border-bottom: 1px solid var(--border-color); cursor: pointer; font-size: 0.9rem; }
+        .chapter-item.active { background: rgba(59, 130, 246, 0.1); color: var(--accent); border-left: 4px solid var(--accent); font-weight: bold; }
 
-        .chapter-item { padding: 18px 25px; border-bottom: 1px solid var(--border-color); cursor: pointer; color: var(--text-color); transition: 0.2s; font-size: 0.95rem; }
-        .chapter-item:hover { background: var(--item-hover); color: var(--accent); }
-        .chapter-item.active { background: rgba(59, 130, 246, 0.12); color: var(--accent); border-left: 5px solid var(--accent); font-weight: bold; }
-
-        .sidebar-footer { padding: 20px; border-top: 1px solid var(--border-color); background: var(--bg-sidebar); }
-        #theme-btn {
-            width: 100%; padding: 12px; border: 1px solid var(--border-color);
-            background: var(--bg-sidebar); color: var(--text-color);
-            border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 12px; font-weight: 500; transition: 0.3s;
-        }
-        #theme-btn:hover { border-color: var(--accent); background: var(--item-hover); }
-
-        /* Viewer Area */
+        /* Main Viewer */
         #main-viewer { 
             width: 100%; height: 100vh;
             overflow-y: auto; display: flex; flex-direction: column; align-items: center; 
-            background: var(--bg-main); transition: background 0.3s ease; 
-            scrollbar-gutter: stable;
+            background: var(--bg-main); 
+            transition: padding-left 0.4s ease;
+            box-sizing: border-box;
         }
-        #pdf-render-container { width: 100%; max-width: 900px; margin: 20px 0; padding: 0 15px; box-sizing: border-box; }
+        #main-viewer.shifted { padding-left: var(--sidebar-w); }
+
+        #pdf-render-container { width: 100%; max-width: 900px; margin: 20px 0; padding: 0 10px; }
         
-        /* Canvas PDF Sắc Nét */
         canvas { 
-            display: block; margin: 0 auto 30px; 
-            box-shadow: 0 10px 30px rgba(0,0,0,0.12); 
+            display: block; margin: 0 auto 20px; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1); 
             max-width: 100%; height: auto !important; 
             filter: var(--pdf-filter);
-            background: white;
-            transition: filter 0.4s ease;
-            /* Khử mờ tuyệt đối */
             image-rendering: -webkit-optimize-contrast;
-            image-rendering: crisp-edges;
         }
-        
-        #loading { color: var(--text-color); margin-top: 120px; font-size: 1rem; font-weight: 600; text-transform: uppercase; opacity: 0.7; }
 
+        /* --- TỐI ƯU GIAO DIỆN DỌC (MOBILE) --- */
         @media (max-width: 768px) {
-            #pdf-render-container { margin-top: 70px; }
-            --sidebar-w: 85%;
+            #sidebar { width: 40%; }
+            #main-viewer.shifted { padding-left: 0; }
+            
+            /* Làm thanh menu mỏng lại */
+            #menu-toggle {
+                top: 5px;
+                left: 5px;
+                font-size: 26px;
+            }
+
+            /* Giảm lề trên của container để đẩy nội dung lên cao hơn */
+            #pdf-render-container {
+                margin-top: 50px; 
+            }
+
+            .sidebar-header {
+                padding-top: 50px;
+                font-size: 1rem;
+            }
+
+            .chapter-item {
+                padding: 12px 15px; /* Thu hẹp khoảng cách giữa các tập */
+                font-size: 0.85rem;
+            }
         }
     </style>
 </head>
@@ -112,15 +115,14 @@
 <div id="sidebar" class="hidden">
     <div class="sidebar-header">DANH SÁCH TẬP</div>
     <div id="list">Đang quét dữ liệu...</div>
-    <div class="sidebar-footer">
-        <button id="theme-btn">
+    <div class="sidebar-footer" style="padding: 15px;">
+        <button id="theme-btn" style="width: 100%; padding: 10px; cursor: pointer; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-sidebar); color: var(--text-color);">
             <span id="theme-icon">🌙</span> <span id="theme-text">Chế độ tối</span>
         </button>
     </div>
 </div>
 
 <div id="main-viewer">
-    <div id="loading" style="display: none;">Đang tối ưu độ nét...</div>
     <div id="pdf-render-container"></div>
 </div>
 
@@ -128,43 +130,44 @@
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
 
     const sidebar = document.getElementById('sidebar');
+    const mainViewer = document.getElementById('main-viewer');
     const menuToggle = document.getElementById('menu-toggle');
     const themeBtn = document.getElementById('theme-btn');
     const themeIcon = document.getElementById('theme-icon');
     const themeText = document.getElementById('theme-text');
     const listEl = document.getElementById('list');
     const container = document.getElementById('pdf-render-container');
-    const loadingStatus = document.getElementById('loading');
 
-    // Quản lý Giao diện
-    const savedTheme = localStorage.getItem('theme') || 'light';
-    document.documentElement.setAttribute('data-theme', savedTheme);
-    updateThemeUI(savedTheme);
-
-    themeBtn.onclick = () => {
-        let theme = document.documentElement.getAttribute('data-theme');
-        let newTheme = theme === 'light' ? 'dark' : 'light';
-        document.documentElement.setAttribute('data-theme', newTheme);
-        localStorage.setItem('theme', newTheme);
-        updateThemeUI(newTheme);
-    };
-
-    function updateThemeUI(theme) {
+    // Theme logic
+    const updateThemeUI = (theme) => {
         themeIcon.innerText = theme === 'dark' ? '☀️' : '🌙';
         themeText.innerText = theme === 'dark' ? 'Chế độ sáng' : 'Chế độ tối';
-    }
+    };
 
-    // Xử lý Menu mượt mà
+    themeBtn.onclick = () => {
+        let theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', theme);
+        localStorage.setItem('theme', theme);
+        updateThemeUI(theme);
+    };
+
+    // Toggle menu
     menuToggle.onclick = (e) => {
-        sidebar.classList.toggle('hidden');
+        const isHidden = sidebar.classList.toggle('hidden');
+        if (!isHidden && window.innerWidth > 768) {
+            mainViewer.classList.add('shifted');
+        } else {
+            mainViewer.classList.remove('shifted');
+        }
         e.stopPropagation();
     };
 
-    document.getElementById('main-viewer').onclick = () => {
-        if (!sidebar.classList.contains('hidden')) sidebar.classList.add('hidden');
+    mainViewer.onclick = () => {
+        sidebar.classList.add('hidden');
+        mainViewer.classList.remove('shifted');
     };
 
-    // Nạp danh sách truyện
+    // Load Index & PDF
     fetch('assets/novel/index.json')
         .then(res => res.json())
         .then(data => {
@@ -177,60 +180,41 @@
                     e.stopPropagation();
                     loadPDF('assets/novel/' + item.file, div);
                     sidebar.classList.add('hidden');
+                    mainViewer.classList.remove('shifted');
                 };
                 listEl.appendChild(div);
                 if(index === 0) loadPDF('assets/novel/' + item.file, div);
             });
         });
 
-    // Hàm render PDF siêu nét
     async function loadPDF(url, element) {
         document.querySelectorAll('.chapter-item').forEach(el => el.classList.remove('active'));
         element.classList.add('active');
-        
-        container.innerHTML = '';
-        loadingStatus.style.display = 'block';
-        document.getElementById('main-viewer').scrollTop = 0;
+        container.innerHTML = '<p style="text-align:center">Đang nạp dữ liệu...</p>';
+        mainViewer.scrollTop = 0;
 
         try {
             const pdf = await pdfjsLib.getDocument(url).promise;
-            loadingStatus.style.display = 'none';
-
-            // Dùng tỉ lệ điểm ảnh cao (DPR)
+            container.innerHTML = '';
             const dpr = window.devicePixelRatio || 1;
-            // Tăng scale lên 2.0 - 2.2 để nạp dữ liệu chi tiết hơn
-            const baseScale = 2.2; 
+            const baseScale = 2.0; 
 
             for (let i = 1; i <= pdf.numPages; i++) {
                 const page = await pdf.getPage(i);
                 const viewport = page.getViewport({ scale: baseScale });
-                
                 const canvas = document.createElement('canvas');
                 container.appendChild(canvas);
                 const context = canvas.getContext('2d');
 
-                // Tăng kích thước vẽ nội bộ dựa trên DPR
                 canvas.width = Math.floor(viewport.width * dpr);
                 canvas.height = Math.floor(viewport.height * dpr);
-                
-                // Ép kích thước hiển thị chuẩn theo CSS
                 canvas.style.width = viewport.width + "px";
-                canvas.style.height = "auto";
 
-                // Khử mờ nội bộ context
-                context.imageSmoothingEnabled = false;
-                context.webkitImageSmoothingEnabled = false;
                 context.scale(dpr, dpr);
-
-                await page.render({
-                    canvasContext: context,
-                    viewport: viewport,
-                    intent: 'print' // Ép PDF.js sử dụng bộ dựng hình chất lượng in ấn
-                }).promise;
+                await page.render({ canvasContext: context, viewport: viewport }).promise;
             }
         } catch (err) {
-            loadingStatus.innerText = "LỖI NẠP FILE TRUYỆN.";
-            console.error(err);
+            container.innerHTML = 'Lỗi nạp file.';
         }
     }
 </script>
