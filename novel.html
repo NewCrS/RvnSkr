@@ -232,6 +232,20 @@
     font-weight: 800; 
     
 }
+/* Nút Home ở góc trên bên phải */
+#home-link {
+    position: fixed; top: 12px; right: 12px; z-index: 18000;
+    text-decoration: none; color: var(--btn-toggle-color);
+    font-size: 24px; padding: 5px; line-height: 1;
+    -webkit-tap-highlight-color: transparent;
+    transition: opacity 0.2s;
+}
+#home-link:hover { opacity: 0.7; }
+
+/* Điều chỉnh lại cho mobile */
+@media (max-width: 768px) {
+    #home-link { top: 10px; right: 10px; font-size: 22px; }
+}
 
 
 
@@ -243,6 +257,7 @@
 <body>
 
 <button id="menu-toggle">☰</button>
+<a href="index.html" id="home-link" title="backhome">⌂</a>
 
 <div id="sidebar" class="hidden">
     <div class="sidebar-header">ARCHIVE LIST</div>
