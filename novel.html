@@ -187,6 +187,31 @@
     }
 }
 
+/* Hiệu ứng rung màn hình */
+@keyframes screen-shake {
+    0% { transform: translate(0, 0); }
+    10% { transform: translate(-5px, -5px); }
+    20% { transform: translate(5px, 5px); }
+    30% { transform: translate(-5px, 5px); }
+    40% { transform: translate(5px, -5px); }
+    50% { transform: translate(-5px, -5px); }
+    60% { transform: translate(5px, 5px); }
+    70% { transform: translate(-5px, 5px); }
+    80% { transform: translate(5px, -5px); }
+    90% { transform: translate(-5px, -5px); }
+    100% { transform: translate(0, 0); }
+}
+
+.shake-active {
+    animation: screen-shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
+}
+
+
+
+
+
+
+
     </style>
 </head>
 <body>
@@ -380,15 +405,31 @@
     function triggerExplosion() {
         isChangingChapter = true;
         const rect = nextIndicator.getBoundingClientRect();
+        
+        // 1. Vị trí nổ
         ripple.style.left = (rect.left + rect.width / 2) + 'px';
         ripple.style.top = (rect.top + rect.height / 2) + 'px';
         ripple.classList.add('active');
-        if (window.navigator.vibrate) window.navigator.vibrate(150);
+    
+        // 2. Rung vật lý (Dành cho điện thoại Android)
+        if (window.navigator.vibrate) {
+            // Rung theo nhịp: Rung 100ms, nghỉ 30ms, rung 200ms
+            window.navigator.vibrate([100, 30, 200]);
+        }
+    
+        // 3. Rung giao diện (Dành cho cả PC và Mobile)
+        document.body.classList.add('shake-active');
+    
         setTimeout(() => {
             goToNextChapter();
-            setTimeout(() => { ripple.classList.remove('active'); }, 400);
+            setTimeout(() => { 
+                ripple.classList.remove('active');
+                // Xóa class rung để có thể kích hoạt lại lần sau
+                document.body.classList.remove('shake-active');
+            }, 400);
         }, 200);
     }
+
 
     function goToNextChapter() {
         if (currentChapterIndex < chapterList.length - 1) {
