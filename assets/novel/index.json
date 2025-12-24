@@ -2,21 +2,36 @@
   {
     "title": "Vol 1 - Mở đầu",
     "file": "Vol.1-I.pdf",
-    "type": "pdf"
+    "type": "pdf",
+    "vol" : 1,
+    "chapter": 1,
+    "episode": 0
+
   },
   {
     "title": "Vol 1 - Ep1 - Mùa hè ấy...",
     "file": "Vol.1-Ep1.pdf",
-    "type": "pdf"
+    "type": "pdf",
+    "vol" : 1,
+    "chapter": 1,
+    "episode": 1
   },
   {
     "title": "Vol 1 - Ep2 - Cô là ai?",
     "file": "Vol.1-Ep2.pdf",
-    "type": "pdf"
+    "type": "pdf",
+    "vol" : 1,
+    "chapter": 1,
+    "episode": 2
+
   },
   {
     "title": "Vol 1 - Ep3 - Lời thì thầm của cậu.",
     "file": "Vol.1-Ep3.pdf",
-    "type": "pdf"
+    "type": "pdf",
+    "vol" : 1,
+    "chapter": 1,
+    "episode": 3
+
   }
 ]

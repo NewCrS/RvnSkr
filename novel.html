@@ -206,6 +206,32 @@
     animation: screen-shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
 }
 
+/* Header cho mỗi Volume */
+.vol-group { margin-bottom: 5px; }
+.vol-title { 
+    padding: 14px 20px; 
+    background: var(--item-hover); 
+    font-size: 0.7rem; 
+    font-weight: 900; 
+    color: var(--accent);
+    text-transform: uppercase; 
+    letter-spacing: 1.5px;
+    position: sticky; top: 0; z-index: 2;
+    border-bottom: 1px solid var(--border-color);
+}
+
+/* Định dạng lại Item trong danh sách */
+.chapter-item { 
+    display: flex; 
+    flex-direction: column; 
+    gap: 4px; 
+}
+.chapter-item .sub-label { 
+    font-size: 0.65rem; 
+    opacity: 0.6; 
+    font-weight: 800; 
+    text-transform: uppercase; 
+}
 
 
 
@@ -449,24 +475,56 @@
         }
     }
 
-    fetch('assets/novel/index.json').then(res => res.json()).then(data => {
-        chapterList = data; 
-        listEl.innerHTML = '';
-        data.forEach((item, index) => {
-            const div = document.createElement('div');
-            div.className = 'chapter-item';
-            div.textContent = item.title;
-            div.onclick = (e) => {
-                e.stopPropagation();
-                currentChapterIndex = index;
-                renderPDF('assets/novel/' + item.file, div);
-                sidebar.classList.add('hidden');
-                viewer.classList.remove('shifted');
-            };
-            listEl.appendChild(div);
-            if(index === 0) renderPDF('assets/novel/' + item.file, div);
-        });
+fetch('assets/novel/index.json').then(res => res.json()).then(data => {
+    chapterList = data; 
+    listEl.innerHTML = '';
+    
+    let currentVolValue = null; // Lưu trữ Volume hiện tại để so sánh
+    let volContainer = null;
+
+    data.forEach((item, index) => {
+        // 1. Kiểm tra nếu Volume thay đổi (Hỗ trợ số thực như 1.5)
+        const volVal = item.vol !== undefined ? item.vol : null;
+
+        if (volVal !== currentVolValue) {
+            currentVolValue = volVal;
+            volContainer = document.createElement('div');
+            volContainer.className = 'vol-group';
+            
+            const volHeader = document.createElement('div');
+            volHeader.className = 'vol-title';
+            volHeader.textContent = volVal !== null ? `Volume ${volVal}` : "Other";
+            volContainer.appendChild(volHeader);
+            listEl.appendChild(volContainer);
+        }
+
+        // 2. Tạo Item cho từng tập
+        const div = document.createElement('div');
+        div.className = 'chapter-item';
+        
+        // Tạo nhãn Ch. và Ep.
+        let labels = [];
+        if (item.chapter !== undefined) labels.push(`Ch. ${item.chapter}`);
+        if (item.episode !== undefined) labels.push(`Ep. ${item.episode}`);
+        const labelStr = labels.join(" • ");
+        
+        div.innerHTML = `
+            ${labelStr ? `<span class="sub-label">${labelStr}</span>` : ''}
+            <span class="title-label">${item.title}</span>
+        `;
+
+        div.onclick = (e) => {
+            e.stopPropagation();
+            currentChapterIndex = index;
+            renderPDF('assets/novel/' + item.file, div);
+            sidebar.classList.add('hidden');
+        };
+
+        volContainer.appendChild(div);
+        if(index === 0) renderPDF('assets/novel/' + item.file, div);
     });
+});
+
 
     // --- HÀM RENDER TỐI ƯU HÓA ---
     async function renderPDF(url, element) {
