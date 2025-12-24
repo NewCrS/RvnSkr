@@ -747,6 +747,12 @@
     display: none !important;
 }
 
+/* Tránh bôi đen văn bản khi vuốt trên điện thoại */
+.content-area {
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: pan-y; /* Chỉ cho phép cuộn dọc mặc định, vuốt ngang sẽ do JS xử lý */
+}
 
 
 
@@ -1216,6 +1222,61 @@ window.onload = function() {
 					        0.3
 					    );
 					});
+
+
+
+// --- TÍNH NĂNG VUỐT NGANG CHUYỂN TAB ---
+let touchstartX = 0;
+let touchendX = 0;
+let touchstartY = 0;
+let touchendY = 0;
+
+// Danh sách các tab theo thứ tự
+const tabs = ['home', 'general', 'about', 'id'];
+
+function handleGesture() {
+    const swipeThreshold = 100; // Khoảng cách tối thiểu để tính là vuốt (pixel)
+    const verticalThreshold = 50; // Giới hạn vuốt chéo (tránh nhầm với cuộn trang)
+    
+    const diffX = touchendX - touchstartX;
+    const diffY = touchendY - touchstartY;
+
+    // Kiểm tra xem người dùng vuốt ngang hay đang cuộn dọc
+    if (Math.abs(diffX) > swipeThreshold && Math.abs(diffY) < verticalThreshold) {
+        let currentIndex = tabs.indexOf(currentTabName());
+        
+        if (diffX < 0) {
+            // Vuốt sang trái -> Chuyển sang tab bên phải
+            if (currentIndex < tabs.length - 1) {
+                switchTab(tabs[currentIndex + 1]);
+            }
+        } else {
+            // Vuốt sang phải -> Chuyển sang tab bên trái
+            if (currentIndex > 0) {
+                switchTab(tabs[currentIndex - 1]);
+            }
+        }
+    }
+}
+
+// Hàm lấy tên tab hiện tại đang active
+function currentTabName() {
+    const activeLink = document.querySelector('nav a.active-link');
+    return activeLink ? activeLink.id.replace('btn-', '') : 'home';
+}
+
+// Lắng nghe sự kiện cảm ứng trên toàn bộ body
+document.addEventListener('touchstart', e => {
+    touchstartX = e.changedTouches[0].screenX;
+    touchstartY = e.changedTouches[0].screenY;
+}, {passive: true});
+
+document.addEventListener('touchend', e => {
+    touchendX = e.changedTouches[0].screenX;
+    touchendY = e.changedTouches[0].screenY;
+    handleGesture();
+}, {passive: true});
+
 
 
 			
