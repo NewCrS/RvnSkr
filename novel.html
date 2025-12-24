@@ -214,7 +214,7 @@
     font-size: 0.7rem; 
     font-weight: 900; 
     color: var(--accent);
-    text-transform: uppercase; 
+    
     letter-spacing: 1.5px;
     position: sticky; top: 0; z-index: 2;
     border-bottom: 1px solid var(--border-color);
@@ -230,7 +230,7 @@
     font-size: 0.65rem; 
     opacity: 0.6; 
     font-weight: 800; 
-    text-transform: uppercase; 
+    
 }
 
 
@@ -493,7 +493,7 @@ fetch('assets/novel/index.json').then(res => res.json()).then(data => {
             
             const volHeader = document.createElement('div');
             volHeader.className = 'vol-title';
-            volHeader.textContent = volVal !== null ? `Volume ${volVal}` : "Other";
+            volHeader.textContent = volVal !== null ? `Vol.${volVal}` : "Other";
             volContainer.appendChild(volHeader);
             listEl.appendChild(volContainer);
         }
