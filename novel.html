@@ -247,7 +247,39 @@
     #home-link { top: 10px; right: 10px; font-size: 22px; }
 }
 
+/* Thanh đệm để đẩy nội dung xuống */
+#top-spacer {
+    width: 100%;
+    height: 0;
+    background: var(--bg-main); /* Tiệp màu với nền để không lộ */
+    transition: height 0.3s ease;
+    position: relative;
+    z-index: 19000; /* Nằm dưới nút bấm nhưng trên viewer */
+    flex-shrink: 0; 
+}
 
+#top-spacer.active {
+    height: 40px; /* Độ cao bạn muốn */
+}
+
+/* Đảm bảo Body không bị vỡ bố cục Flex */
+body {
+    flex-direction: column; /* Đổi thành cột để spacer nằm trên cùng */
+}
+
+/* Khi spacer hoạt động, dịch chuyển các nút bấm xuống theo */
+body.spacer-active #menu-toggle { transform: translateY(25px); }
+body.spacer-active #home-link { transform: translateY(25px); }
+
+/* Đảm bảo Viewer và Sidebar vẫn chiếm hết phần còn lại */
+#sidebar {
+    top: 0; /* Vẫn giữ top 0 để nó bao phủ toàn màn hình nếu cần */
+    transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1), background 0.3s ease, top 0.3s ease;
+}
+
+body.spacer-active #sidebar {
+    top: 25px; /* Sidebar cũng tụt xuống khi có spacer */
+}
 
 
 
@@ -255,6 +287,7 @@
     </style>
 </head>
 <body>
+<div id="top-spacer"></div>
 
 <button id="menu-toggle">☰</button>
 <a href="index.html" id="home-link" title="backhome">⌂</a>
@@ -570,6 +603,35 @@ fetch('assets/novel/index.json').then(res => res.json()).then(data => {
             pdfContainer.innerHTML = '<p style="text-align:center; color:red;">FILE_ACCESS_DENIED</p>';
         }
     }
+    
+    
+let touchStartY3 = 0;
+const topSpacer = document.getElementById('top-spacer');
+
+// Lắng nghe trên toàn bộ window để đảm bảo nhận được sự kiện
+window.addEventListener('touchstart', (e) => {
+    if (e.touches.length === 3) {
+        touchStartY3 = e.touches[0].pageY;
+    }
+}, { passive: true });
+
+window.addEventListener('touchmove', (e) => {
+    if (e.touches.length === 4) {
+        const touchY3 = e.touches[0].pageY;
+        const diffY = touchY3 - touchStartY3;
+
+        if (diffY > 40) { // Vuốt xuống
+            topSpacer.classList.add('active');
+            document.body.classList.add('spacer-active');
+        } else if (diffY < -40) { // Vuốt lên
+            topSpacer.classList.remove('active');
+            document.body.classList.remove('spacer-active');
+        }
+    }
+}, { passive: true });
+
+
+
 </script>
 </body>
 </html>
