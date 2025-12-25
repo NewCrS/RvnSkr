@@ -313,7 +313,17 @@
         }
 
         .chapter-item { display: flex; flex-direction: column; gap: 4px; }
-        .chapter-item .sub-label { font-size: 0.65rem; opacity: 0.6; font-weight: 800; }
+        .chapter-item .sub-label { 
+            font-size: 0.65rem; 
+            opacity: 0.7; 
+            font-weight: 800; 
+            display: flex;
+            justify-content: space-between; /* Để Ch. Ep nằm trái, số chữ nằm phải */
+        }
+        .word-count {
+            color: var(--accent);
+            font-style: italic;
+        }
 
 
         #home-link:hover { opacity: 0.7; }
@@ -601,48 +611,87 @@
         }
     }
 
-    fetch('assets/novel/index.json').then(res => res.json()).then(data => {
-        chapterList = data; 
-        listEl.innerHTML = '';
-        let currentVolValue = null;
-        let volContainer = null;
+    // Hàm đếm số chữ (Word Count) - Chỉ đếm cho file .md
+    async function getWordCount(fileUrl) {
+        if (!fileUrl.toLowerCase().endsWith('.md')) return 0;
+        try {
+            const response = await fetch(fileUrl);
+            if (!response.ok) return 0;
+            const text = await response.text();
+            
+            // Loại bỏ ký tự đặc biệt Markdown và khoảng trắng thừa
+            const cleanText = text
+                .replace(/<\/?[^>]+(>|$)/g, "") // Bỏ HTML
+                .replace(/[#*_~\[\]()]/g, "")  // Bỏ cú pháp MD
+                .trim();
+            
+            // Sử dụng regex tiếng Việt để đếm từ chính xác hơn
+            const words = cleanText.match(/\S+/g);
+            return words ? words.length : 0;
+        } catch (err) {
+            console.warn("Lỗi đếm chữ tại:", fileUrl);
+            return 0;
+        }
+    }
 
-        data.forEach((item, index) => {
-            const fileName = item.file.split('/').pop();
-            const parts = fileName.replace(/\.(md|pdf)$/, '').split('-');
-            const volVal = parts[0] || "0";
-            const chVal = parts[1] || "0";
-            const epVal = parts[2] || "0";
+    // Xử lý nạp danh sách và hiển thị
+    fetch('assets/novel/index.json')
+        .then(res => res.json())
+        .then(async (data) => {
+            chapterList = data; 
+            listEl.innerHTML = '';
+            
+            // Tạo mảng các Promise đếm chữ để chạy song song
+            const countPromises = data.map(item => getWordCount('assets/novel/' + item.file));
+            const allWordCounts = await Promise.all(countPromises);
 
-            if (volVal !== currentVolValue) {
-                currentVolValue = volVal;
-                volContainer = document.createElement('div');
-                volContainer.className = 'vol-group';
-                const volHeader = document.createElement('div');
-                volHeader.className = 'vol-title';
-                volHeader.textContent = `Vol.${volVal}`;
-                volContainer.appendChild(volHeader);
-                listEl.appendChild(volContainer);
-            }
+            let currentVolValue = null;
+            let volContainer = null;
 
-            const div = document.createElement('div');
-            div.className = 'chapter-item';
-            div.innerHTML = `
-                <span class="sub-label">Ch. ${chVal} • Ep. ${epVal}</span>
-                <span class="title-label">${item.title}</span>
-            `;
+            data.forEach((item, index) => {
+                const fileName = item.file.split('/').pop();
+                const parts = fileName.replace(/\.(md|pdf)$/, '').split('-');
+                const volVal = parts[0] || "0";
+                const chVal = parts[1] || "0";
+                const epVal = parts[2] || "0";
 
-            div.onclick = (e) => {
-                e.stopPropagation();
-                currentChapterIndex = index;
-                smartRender('assets/novel/' + item.file, div);
-                sidebar.classList.add('hidden');
-            };
+                const words = allWordCounts[index];
+                // Chỉ hiện số chữ nếu > 0 (Dành cho file MD)
+                const wordDisplay = words > 0 ? `${words.toLocaleString()} chữ` : "---";
 
-            volContainer.appendChild(div);
-            if(index === 0) smartRender('assets/novel/' + item.file, div);
+                if (volVal !== currentVolValue) {
+                    currentVolValue = volVal;
+                    volContainer = document.createElement('div');
+                    volContainer.className = 'vol-group';
+                    const volHeader = document.createElement('div');
+                    volHeader.className = 'vol-title';
+                    volHeader.textContent = `Vol.${volVal}`;
+                    volContainer.appendChild(volHeader);
+                    listEl.appendChild(volContainer);
+                }
+
+                const div = document.createElement('div');
+                div.className = 'chapter-item';
+                div.innerHTML = `
+                    <div class="sub-label">
+                        <span>Ch. ${chVal} • Ep. ${epVal}</span>
+                        <span class="word-count">${wordDisplay}</span>
+                    </div>
+                    <span class="title-label">${item.title}</span>
+                `;
+
+                div.onclick = (e) => {
+                    e.stopPropagation();
+                    currentChapterIndex = index;
+                    smartRender('assets/novel/' + item.file, div);
+                    sidebar.classList.add('hidden');
+                };
+
+                volContainer.appendChild(div);
+                if(index === 0) smartRender('assets/novel/' + item.file, div);
+            });
         });
-    });
+
 
     async function smartRender(url, element) {
         currentFileUrl = url;
