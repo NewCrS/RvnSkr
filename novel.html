@@ -1,7 +1,9 @@
-</html>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
+    <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@300;400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Rvn Light Novel - Premium Reader</title>
@@ -17,9 +19,58 @@
             --border-color: #eeeeee;
             --btn-toggle-color: rgba(0, 0, 0, 0.7);
             --pdf-filter: none;
-            /* Biến mới để điều khiển Zoom CSS */
-            --zoom-factor: 1; 
+            --font-size: 1.1rem; /* Thay đổi từ zoom-factor sang font-size */
         }
+/* 1. Cấu hình khối bao quanh trích dẫn */
+#md-content blockquote {
+    margin-left: 0px !important;    /* Dời sát lề trái trang */
+    margin-right: 0px;
+    padding-left: 15px;             /* Khoảng cách từ đường kẻ đến dấu > */
+    border-left: 3px solid var(--accent); /* Đường kẻ dọc */
+    background: rgba(59, 130, 246, 0.05); /* Nền nhẹ để phân biệt nội dung */
+    margin-inline-start: 0px;       /* Ép trình duyệt không tự thụt lề */
+}
+
+/* 2. Cấu hình đoạn văn bên trong blockquote */
+#md-content blockquote p {
+    text-indent: 0px !important;    /* Không thụt đầu dòng văn bản */
+    margin: 0;
+    display: flex;                  /* Giúp dấu > và chữ thẳng hàng hoàn hảo */
+    align-items: flex-start;
+}
+
+/* 3. Cấu hình riêng cho dấu > */
+#md-content blockquote p::before {
+    content: "> " !important;        /* Hiển thị dấu > */
+    font-family: 'Courier New', monospace;
+    font-weight: 800;
+    color: var(--accent);
+    margin-right: 8px;              /* Khoảng cách giữa dấu > và dấu " */
+    flex-shrink: 0;                 /* Không cho dấu > bị co lại khi chữ dài */
+    display: inline-block;
+}
+
+
+        #md-content {
+            width: 100%;
+            max-width: 800px;
+            padding: 40px 25px;
+            font-family: 'Comfortaa', cursive;
+            line-height: 1.8;
+            font-size: var(--font-size); /* Áp dụng biến font-size ở đây */
+            color: var(--text-color);
+            box-sizing: border-box;
+            word-wrap: break-word;
+        }
+
+        #md-content h1, #md-content h2 { color: var(--accent); border-bottom: 1px solid var(--border-color); padding-bottom: 10px; }
+        #md-content p { margin-bottom: 1.5em; text-align: justify; }
+
+        /* Ẩn hiện giữa PDF và MD */
+        .view-mode-pdf #pdf-container { display: block; }
+        .view-mode-pdf #md-content { display: none; }
+        .view-mode-md #pdf-container { display: none; }
+        .view-mode-md #md-content { display: block; }
 
         [data-theme="dark"] {
             --bg-main: #121212;
@@ -48,13 +99,39 @@
             overflow: hidden; transition: background 0.3s ease; 
         }
 
-        /* --- UI CONTROLS --- */
-        #menu-toggle {
-            position: fixed; top: 12px; left: 12px; z-index: 18000;
-            background: transparent; color: var(--btn-toggle-color);
-            border: none; font-size: 30px; cursor: pointer; padding: 5px; line-height: 1; 
-            outline: none; -webkit-tap-highlight-color: transparent;
-        }
+#menu-toggle {
+    position: fixed; 
+    top: 12px; 
+    left: 12px; 
+    /* Nâng z-index lên cao nhất để không bị đè */
+    z-index: 30000 !important; 
+    background: transparent; 
+    color: var(--btn-toggle-color);
+    border: none; 
+    font-size: 30px; 
+    cursor: pointer; 
+    padding: 5px; 
+    line-height: 1; 
+    outline: none; 
+    -webkit-tap-highlight-color: transparent;
+    transition: transform 0.3s ease, color 0.3s ease;
+}
+
+#home-link {
+    position: fixed; 
+    top: 12px; 
+    right: 12px; 
+    /* Nâng z-index lên cao nhất tương ứng */
+    z-index: 30000 !important; 
+    text-decoration: none; 
+    color: var(--btn-toggle-color);
+    font-size: 24px; 
+    padding: 5px; 
+    line-height: 1;
+    -webkit-tap-highlight-color: transparent;
+    transition: opacity 0.2s, transform 0.3s ease;
+}
+
 
         /* --- SIDEBAR --- */
         #sidebar { 
@@ -90,44 +167,46 @@
             pointer-events: none; 
         }
 
-        /* Logic vị trí Thumb */
-        [data-zoom="100"] .zoom-thumb { transform: translateX(0%); }
-        [data-zoom="110"] .zoom-thumb { transform: translateX(100%); }
-        [data-zoom="120"] .zoom-thumb { transform: translateX(200%); }
+        /* Update data attributes for Font Size */
+        [data-size="small"] .size-thumb { transform: translateX(0%); }
+        [data-size="medium"] .size-thumb { transform: translateX(100%); }
+        [data-size="large"] .size-thumb { transform: translateX(200%); }
 
         [data-theme="light"] .theme-thumb { transform: translateX(0%); }
         [data-theme="dark"] .theme-thumb { transform: translateX(100%); }
         [data-theme="black"] .theme-thumb { transform: translateX(200%); }
+
 #main-viewer { 
     width: 100%;
     height: 100vh;
     overflow-y: auto;
-    overflow-x: hidden; /* ⬅️ quan trọng: không lệch ngang khi zoom */
+    overflow-x: hidden;
     display: flex;
     flex-direction: column;
     align-items: center;
     background: var(--bg-main);
-    transition: padding-left 0.4s ease, background 0.3s ease, opacity 0.4s ease;
+    /* THÊM DÒNG DƯỚI ĐÂY */
+    padding-top: 0; 
+    transition: padding-top 0.3s ease, background 0.3s ease, opacity 0.4s ease;
+    /* ------------------ */
     overscroll-behavior-y: none;
     -webkit-overflow-scrolling: touch;
 }
 
-#pdf-zoom-layer {
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    
-    transform: scale(var(--zoom-factor));
-    transform-origin: center top;
-    transition: transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-}
 
-#pdf-container {
-    width: 100%;
-    max-width: 850px;
-    line-height: 0;
-}
+        #pdf-zoom-layer {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            /* Bỏ transform scale cũ ở đây để không ảnh hưởng PDF */
+            transform-origin: center top;
+        }
 
+        #pdf-container {
+            width: 100%;
+            max-width: 850px;
+            line-height: 0;
+        }
 
         canvas { 
             display: block; width: 100%; height: auto !important; 
@@ -140,9 +219,6 @@
         }
         canvas:first-child { margin-top: 0; }
 
-
-
-        /* --- NEXT CHAPTER INDICATOR --- */
         #next-chapter-indicator {
             position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(150px);
             background: var(--accent); color: white; padding: 12px 24px; border-radius: 30px;
@@ -171,119 +247,108 @@
         }
 
         @keyframes explode-out { 0% { transform: scale(0); opacity: 1; } 100% { transform: scale(500); opacity: 0; } }
-@media (max-width: 768px) {
-    #sidebar { width: 40%; } /* Tăng chiều rộng menu trên mobile cho dễ bấm */
-    #main-viewer.shifted { padding-left: 0; }
-    #menu-toggle { font-size: 26px; top: 8px; left: 8px; }
-    #pdf-container { margin-top: 50px; }
 
-    /* Chỉ áp dụng cấu hình cắt sâu cho màn hình DỌC của mobile */
-    @media (orientation: portrait) {
-        canvas { 
-            clip-path: inset(6% 0 9% 0); 
-            margin-top: -21.1%; 
-            margin-bottom: -21.1%; 
+        @media (max-width: 768px) {
+            #sidebar { width: 40%; }
+            #main-viewer.shifted { padding-left: 0; }
+            #menu-toggle { font-size: 26px; top: 8px; left: 8px; }
+            #pdf-container { margin-top: 50px; }
+            @media (orientation: portrait) {
+                canvas { 
+                    clip-path: inset(6% 0 9% 0); 
+                    margin-top: -21.1%; 
+                    margin-bottom: -21.1%; 
+                }
+            }
         }
-    }
-}
 
-/* Hiệu ứng rung màn hình */
-@keyframes screen-shake {
-    0% { transform: translate(0, 0); }
-    10% { transform: translate(-5px, -5px); }
-    20% { transform: translate(5px, 5px); }
-    30% { transform: translate(-5px, 5px); }
-    40% { transform: translate(5px, -5px); }
-    50% { transform: translate(-5px, -5px); }
-    60% { transform: translate(5px, 5px); }
-    70% { transform: translate(-5px, 5px); }
-    80% { transform: translate(5px, -5px); }
-    90% { transform: translate(-5px, -5px); }
-    100% { transform: translate(0, 0); }
-}
+        @keyframes screen-shake {
+            0% { transform: translate(0, 0); }
+            10% { transform: translate(-5px, -5px); }
+            20% { transform: translate(5px, 5px); }
+            30% { transform: translate(-5px, 5px); }
+            40% { transform: translate(5px, -5px); }
+            50% { transform: translate(-5px, -5px); }
+            60% { transform: translate(5px, 5px); }
+            70% { transform: translate(-5px, 5px); }
+            80% { transform: translate(5px, -5px); }
+            90% { transform: translate(-5px, -5px); }
+            100% { transform: translate(0, 0); }
+        }
 
-.shake-active {
-    animation: screen-shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
-}
+        .shake-active { animation: screen-shake 0.4s cubic-bezier(.36,.07,.19,.97) both; }
 
-/* Header cho mỗi Volume */
-.vol-group { margin-bottom: 5px; }
-.vol-title { 
-    padding: 14px 20px; 
-    background: var(--item-hover); 
-    font-size: 0.7rem; 
-    font-weight: 900; 
-    color: var(--accent);
-    
-    letter-spacing: 1.5px;
-    position: sticky; top: 0; z-index: 2;
-    border-bottom: 1px solid var(--border-color);
-}
+        .vol-group { margin-bottom: 5px; }
+        .vol-title { 
+            padding: 14px 20px; 
+            background: var(--item-hover); 
+            font-size: 0.7rem; 
+            font-weight: 900; 
+            color: var(--accent);
+            letter-spacing: 1.5px;
+            position: sticky; top: 0; z-index: 2;
+            border-bottom: 1px solid var(--border-color);
+        }
 
-/* Định dạng lại Item trong danh sách */
-.chapter-item { 
-    display: flex; 
-    flex-direction: column; 
-    gap: 4px; 
-}
-.chapter-item .sub-label { 
-    font-size: 0.65rem; 
-    opacity: 0.6; 
-    font-weight: 800; 
-    
-}
-/* Nút Home ở góc trên bên phải */
-#home-link {
-    position: fixed; top: 12px; right: 12px; z-index: 18000;
-    text-decoration: none; color: var(--btn-toggle-color);
-    font-size: 24px; padding: 5px; line-height: 1;
-    -webkit-tap-highlight-color: transparent;
-    transition: opacity 0.2s;
-}
-#home-link:hover { opacity: 0.7; }
+        .chapter-item { display: flex; flex-direction: column; gap: 4px; }
+        .chapter-item .sub-label { font-size: 0.65rem; opacity: 0.6; font-weight: 800; }
 
-/* Điều chỉnh lại cho mobile */
-@media (max-width: 768px) {
-    #home-link { top: 10px; right: 10px; font-size: 22px; }
-}
 
-/* Thanh đệm để đẩy nội dung xuống */
+        #home-link:hover { opacity: 0.7; }
+
+        @media (max-width: 768px) { #home-link { top: 10px; right: 10px; font-size: 22px; } }
+
 #top-spacer {
+    position: fixed; /* Cố định ở đỉnh màn hình */
+    top: 0;
+    left: 0;
     width: 100%;
-    height: 0;
-    background: var(--bg-main); /* Tiệp màu với nền để không lộ */
-    transition: height 0.3s ease;
-    position: relative;
-    z-index: 19000; /* Nằm dưới nút bấm nhưng trên viewer */
-    flex-shrink: 0; 
-}
-
-#top-spacer.active {
-    height: 48px; /* Độ cao bạn muốn */
-}
-
-/* Đảm bảo Body không bị vỡ bố cục Flex */
-body {
-    flex-direction: column; /* Đổi thành cột để spacer nằm trên cùng */
-}
-
-/* Khi spacer hoạt động, dịch chuyển các nút bấm xuống theo */
-body.spacer-active #menu-toggle { transform: translateY(25px); }
-body.spacer-active #home-link { transform: translateY(25px); }
-
-/* Đảm bảo Viewer và Sidebar vẫn chiếm hết phần còn lại */
-#sidebar {
-    top: 0; /* Vẫn giữ top 0 để nó bao phủ toàn màn hình nếu cần */
-    transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1), background 0.3s ease, top 0.3s ease;
-}
-
-body.spacer-active #sidebar {
-    top: 48px; /* Sidebar cũng tụt xuống khi có spacer */
+    height: 60px; /* Độ cao vùng an toàn */
+    background: transparent; /* TRONG SUỐT hoàn toàn */
+    z-index: 15000; /* Nằm trên cùng */
+    pointer-events: none; /* Cho phép chạm xuyên qua để cuộn truyện */
+    transition: opacity 0.3s ease;
 }
 
 
+        #top-spacer.active { height: 48px; }
 
+        body { flex-direction: column; }
+        body.spacer-active #menu-toggle { transform: translateY(48px); }
+        body.spacer-active #home-link { transform: translateY(48px); }
 
+   #sidebar { 
+            position: fixed; 
+            top: 0 !important; /* Giữ cố định đỉnh để không giật animation */
+            left: 0; 
+            bottom: 0;
+            height: 100vh;
+            width: var(--sidebar-w); 
+            background: var(--bg-sidebar); 
+            overflow: hidden; 
+            display: flex; 
+            flex-direction: column;
+            /* Chỉ transition transform để đạt hiệu suất cao nhất */
+            transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1), background 0.3s ease;
+            z-index: 20000; 
+            border-right: 1px solid var(--border-color);
+        }
+        #sidebar.hidden { transform: translateX(-100%); }
+
+        /* Nội dung bên trong Sidebar nhích xuống mượt mà */
+        .sidebar-header { 
+            padding: 60px 20px 15px; 
+            font-weight: bold; 
+            border-bottom: 1px solid var(--border-color); 
+            font-size: 1.1rem; 
+            letter-spacing: 1px;
+            transition: padding-top 0.3s ease; /* Animation cho phần đệm nội dung */
+        }
+
+        /* Khi Spacer kích hoạt: Chỉ đẩy nội dung bên trong, không đẩy cả Sidebar */
+        body.spacer-active .sidebar-header {
+            padding-top: 100px; 
+        }
     </style>
 </head>
 <body>
@@ -297,14 +362,14 @@ body.spacer-active #sidebar {
     <div id="list">Initialing...</div>
     
     <div class="sidebar-footer">
-        <div class="control-group" id="zoom-selector">
+        <div class="control-group" id="size-selector">
             <div class="control-labels">
-                <span>100%</span>
-                <span>110%</span>
-                <span>120%</span>
+                <span>Small</span>
+                <span>Medium</span>
+                <span>Large</span>
             </div>
-            <div class="slider-track" id="zoom-track">
-                <div class="slider-thumb zoom-thumb"></div>
+            <div class="slider-track" id="size-track">
+                <div class="slider-thumb size-thumb"></div>
             </div>
         </div>
 
@@ -324,6 +389,7 @@ body.spacer-active #sidebar {
 <div id="main-viewer">
     <div id="pdf-zoom-layer">
         <div id="pdf-container"></div>
+        <div id="md-content"></div>
     </div>
 </div>
 
@@ -341,7 +407,7 @@ body.spacer-active #sidebar {
     const viewer = document.getElementById('main-viewer');
     const menuBtn = document.getElementById('menu-toggle');
     const themeTrack = document.getElementById('theme-track');
-    const zoomTrack = document.getElementById('zoom-track');
+    const sizeTrack = document.getElementById('size-track');
     const listEl = document.getElementById('list');
     const pdfContainer = document.getElementById('pdf-container');
     const nextIndicator = document.getElementById('next-chapter-indicator');
@@ -354,26 +420,28 @@ body.spacer-active #sidebar {
     let holdTimer = null;
     let isChangingChapter = false;
 
-    // --- ZOOM LOGIC MỚI (TỐI ƯU GPU) ---
-    let savedZoomLevel = localStorage.getItem('reader-zoom-lvl') || "100";
-    const updateZoomUI = (lvl) => {
-        const factor = parseInt(lvl) / 100;
-        document.documentElement.style.setProperty('--zoom-factor', factor);
-        document.documentElement.setAttribute('data-zoom', lvl);
-        localStorage.setItem('reader-zoom-lvl', lvl);
-    };
-    updateZoomUI(savedZoomLevel);
-
-    zoomTrack.onclick = (e) => {
-        const rect = zoomTrack.getBoundingClientRect();
-        const percent = ((e.clientX - rect.left) / rect.width) * 100;
+    // FONT SIZE LOGIC (Thay thế Zoom Logic)
+    let savedFontSize = localStorage.getItem('reader-font-size') || "medium";
+    const updateFontSizeUI = (size) => {
+        let sizeValue = "1.1rem";
+        if(size === "small") sizeValue = "0.95rem";
+        if(size === "large") sizeValue = "1.35rem";
         
-        if (percent < 33.33) updateZoomUI("100");
-        else if (percent < 66.66) updateZoomUI("110");
-        else updateZoomUI("120");
+        document.documentElement.style.setProperty('--font-size', sizeValue);
+        document.documentElement.setAttribute('data-size', size);
+        localStorage.setItem('reader-font-size', size);
+    };
+    updateFontSizeUI(savedFontSize);
+
+    sizeTrack.onclick = (e) => {
+        const rect = sizeTrack.getBoundingClientRect();
+        const percent = ((e.clientX - rect.left) / rect.width) * 100;
+        if (percent < 33.33) updateFontSizeUI("small");
+        else if (percent < 66.66) updateFontSizeUI("medium");
+        else updateFontSizeUI("large");
     };
 
-    // Theme Logic
+    // THEME LOGIC
     const applyTheme = (theme) => {
         document.documentElement.setAttribute('data-theme', theme);
         localStorage.setItem('theme', theme);
@@ -389,7 +457,6 @@ body.spacer-active #sidebar {
         else applyTheme('black');
     };
 
-    // --- REMAINDER OF YOUR ORIGINAL LOGIC (TOUCH/SCROLL/PDF) ---
     function updateStrokeArray() {
         const w = nextIndicator.offsetWidth;
         const h = nextIndicator.offsetHeight;
@@ -479,31 +546,19 @@ body.spacer-active #sidebar {
     function triggerExplosion() {
         isChangingChapter = true;
         const rect = nextIndicator.getBoundingClientRect();
-        
-        // 1. Vị trí nổ
         ripple.style.left = (rect.left + rect.width / 2) + 'px';
         ripple.style.top = (rect.top + rect.height / 2) + 'px';
         ripple.classList.add('active');
-    
-        // 2. Rung vật lý (Dành cho điện thoại Android)
-        if (window.navigator.vibrate) {
-            // Rung theo nhịp: Rung 100ms, nghỉ 30ms, rung 200ms
-            window.navigator.vibrate([100, 30, 200]);
-        }
-    
-        // 3. Rung giao diện (Dành cho cả PC và Mobile)
+        if (window.navigator.vibrate) window.navigator.vibrate([100, 30, 200]);
         document.body.classList.add('shake-active');
-    
         setTimeout(() => {
             goToNextChapter();
             setTimeout(() => { 
                 ripple.classList.remove('active');
-                // Xóa class rung để có thể kích hoạt lại lần sau
                 document.body.classList.remove('shake-active');
             }, 400);
         }, 200);
     }
-
 
     function goToNextChapter() {
         if (currentChapterIndex < chapterList.length - 1) {
@@ -511,92 +566,126 @@ body.spacer-active #sidebar {
             nextIndicator.classList.remove('visible', 'charging');
             pdfContainer.style.transform = 'translateY(0)';
             viewer.style.opacity = '0';
-            const nextItem = document.querySelectorAll('.chapter-item')[currentChapterIndex];
+            const allItems = document.querySelectorAll('.chapter-item');
+            const nextItem = allItems[currentChapterIndex];
             setTimeout(() => {
-                renderPDF('assets/novel/' + chapterList[currentChapterIndex].file, nextItem);
+                smartRender('assets/novel/' + chapterList[currentChapterIndex].file, nextItem);
                 viewer.scrollTop = 0;
                 setTimeout(() => { 
                     viewer.style.opacity = '1'; 
                     isChangingChapter = false;
                 }, 320);
-            },200);
+            }, 200);
         }
     }
 
-fetch('assets/novel/index.json').then(res => res.json()).then(data => {
-    chapterList = data; 
-    listEl.innerHTML = '';
-    
-    let currentVolValue = null; // Lưu trữ Volume hiện tại để so sánh
-    let volContainer = null;
+    fetch('assets/novel/index.json').then(res => res.json()).then(data => {
+        chapterList = data; 
+        listEl.innerHTML = '';
+        let currentVolValue = null;
+        let volContainer = null;
 
-    data.forEach((item, index) => {
-        // 1. Kiểm tra nếu Volume thay đổi (Hỗ trợ số thực như 1.5)
-        const volVal = item.vol !== undefined ? item.vol : null;
+        data.forEach((item, index) => {
+            const fileName = item.file.split('/').pop();
+            const parts = fileName.replace(/\.(md|pdf)$/, '').split('-');
+            const volVal = parts[0] || "0";
+            const chVal = parts[1] || "0";
+            const epVal = parts[2] || "0";
 
-        if (volVal !== currentVolValue) {
-            currentVolValue = volVal;
-            volContainer = document.createElement('div');
-            volContainer.className = 'vol-group';
-            
-            const volHeader = document.createElement('div');
-            volHeader.className = 'vol-title';
-            volHeader.textContent = volVal !== null ? `Vol.${volVal}` : "Other";
-            volContainer.appendChild(volHeader);
-            listEl.appendChild(volContainer);
-        }
+            if (volVal !== currentVolValue) {
+                currentVolValue = volVal;
+                volContainer = document.createElement('div');
+                volContainer.className = 'vol-group';
+                const volHeader = document.createElement('div');
+                volHeader.className = 'vol-title';
+                volHeader.textContent = `Vol.${volVal}`;
+                volContainer.appendChild(volHeader);
+                listEl.appendChild(volContainer);
+            }
 
-        // 2. Tạo Item cho từng tập
-        const div = document.createElement('div');
-        div.className = 'chapter-item';
-        
-        // Tạo nhãn Ch. và Ep.
-        let labels = [];
-        if (item.chapter !== undefined) labels.push(`Ch. ${item.chapter}`);
-        if (item.episode !== undefined) labels.push(`Ep. ${item.episode}`);
-        const labelStr = labels.join(" • ");
-        
-        div.innerHTML = `
-            ${labelStr ? `<span class="sub-label">${labelStr}</span>` : ''}
-            <span class="title-label">${item.title}</span>
-        `;
+            const div = document.createElement('div');
+            div.className = 'chapter-item';
+            div.innerHTML = `
+                <span class="sub-label">Ch. ${chVal} • Ep. ${epVal}</span>
+                <span class="title-label">${item.title}</span>
+            `;
 
-        div.onclick = (e) => {
-            e.stopPropagation();
-            currentChapterIndex = index;
-            renderPDF('assets/novel/' + item.file, div);
-            sidebar.classList.add('hidden');
-        };
+            div.onclick = (e) => {
+                e.stopPropagation();
+                currentChapterIndex = index;
+                smartRender('assets/novel/' + item.file, div);
+                sidebar.classList.add('hidden');
+            };
 
-        volContainer.appendChild(div);
-        if(index === 0) renderPDF('assets/novel/' + item.file, div);
+            volContainer.appendChild(div);
+            if(index === 0) smartRender('assets/novel/' + item.file, div);
+        });
     });
-});
 
-
-    // --- HÀM RENDER TỐI ƯU HÓA ---
-    async function renderPDF(url, element) {
+    async function smartRender(url, element) {
         currentFileUrl = url;
+        // Quản lý trạng thái active trong sidebar
         document.querySelectorAll('.chapter-item').forEach(el => el.classList.remove('active'));
         if(element) element.classList.add('active');
+        
+        const isMd = url.toLowerCase().endsWith('.md');
+        viewer.className = isMd ? 'view-mode-md' : 'view-mode-pdf';
+        
         pdfContainer.innerHTML = '<p style="text-align:center; margin-top:50px;">ACCESSING...</p>';
+        document.getElementById('md-content').innerHTML = '';
 
+        if (isMd) {
+            try {
+                const response = await fetch(url);
+                if (!response.ok) throw new Error('MD_FILE_NOT_FOUND');
+                
+                let text = await response.text();
+
+                // BƯỚC 1: Chuẩn hóa tất cả ngoặc kép thông minh về dạng thẳng " để xử lý đồng nhất
+                text = text.replace(/[“”]/g, '"');
+
+                // BƯỚC 2: Ép tất cả cụm "nội dung" thành “nội dung” (đầu câu vật cuối câu)
+                // Regex: Tìm cặp dấu " " và thay bằng “ ”
+                text = text.replace(/"([^"]*)"/g, '“$1”');
+
+                // Cấu hình trình render Markdown
+                marked.setOptions({
+                    breaks: true,
+                    gfm: true
+                });
+
+                // BƯỚC 3: Render và hiển thị
+                const parsedHtml = marked.parse(text);
+                document.getElementById('md-content').innerHTML = parsedHtml;
+                
+                pdfContainer.innerHTML = ''; // Dọn dẹp container PDF
+            } catch (err) {
+                console.error(err);
+                document.getElementById('md-content').innerHTML = `
+                    <div style="text-align:center; margin-top:50px; color:red; font-family:sans-serif;">
+                        <h3 style="margin-bottom:10px;">[ ACCESS DENIED ]</h3>
+                        <p style="font-size:0.9rem; opacity:0.7;">File: ${url.split('/').pop()}</p>
+                        <p style="font-size:0.8rem; color:gray;">Vui lòng kiểm tra lại file trong thư mục assets/novel/</p>
+                    </div>`;
+            }
+        } else {
+            renderPDF(url);
+        }
+    }
+
+
+    async function renderPDF(url) {
         try {
             const pdf = await pdfjsLib.getDocument(url).promise;
             pdfContainer.innerHTML = '';
-
             for (let i = 1; i <= pdf.numPages; i++) {
                 const page = await pdf.getPage(i);
-                
-                // Render ở scale 2.5 cố định để giữ độ nét cực cao khi zoom CSS
-                const viewport = page.getViewport({ scale: 2.5 });
+                const viewport = page.getPageViewport({ scale: 2.5 }); // PDF giữ nguyên scale render chất lượng cao
                 const canvas = document.createElement('canvas');
                 pdfContainer.appendChild(canvas);
                 const context = canvas.getContext('2d');
-                
                 canvas.width = viewport.width;
                 canvas.height = viewport.height;
-                
                 await page.render({ canvasContext: context, viewport: viewport }).promise;
             }
         } catch (err) {
@@ -604,34 +693,28 @@ fetch('assets/novel/index.json').then(res => res.json()).then(data => {
         }
     }
     
-    
-let touchStartY3 = 0;
-const topSpacer = document.getElementById('top-spacer');
+    let touchStartY3 = 0;
+    const topSpacer = document.getElementById('top-spacer');
 
-// Lắng nghe trên toàn bộ window để đảm bảo nhận được sự kiện
-window.addEventListener('touchstart', (e) => {
-    if (e.touches.length === 3) {
-        touchStartY3 = e.touches[0].pageY;
-    }
-}, { passive: true });
-
-window.addEventListener('touchmove', (e) => {
-    if (e.touches.length === 4) {
-        const touchY3 = e.touches[0].pageY;
-        const diffY = touchY3 - touchStartY3;
-
-        if (diffY > 40) { // Vuốt xuống
-            topSpacer.classList.add('active');
-            document.body.classList.add('spacer-active');
-        } else if (diffY < -40) { // Vuốt lên
-            topSpacer.classList.remove('active');
-            document.body.classList.remove('spacer-active');
+    window.addEventListener('touchstart', (e) => {
+        if (e.touches.length === 3) {
+            touchStartY3 = e.touches[0].pageY;
         }
-    }
-}, { passive: true });
+    }, { passive: true });
 
-
-
+    window.addEventListener('touchmove', (e) => {
+        if (e.touches.length === 3) {
+            const touchY3 = e.touches[0].pageY;
+            const diffY = touchY3 - touchStartY3;
+            if (diffY > 40) { 
+                topSpacer.classList.add('active');
+                document.body.classList.add('spacer-active');
+            } else if (diffY < -40) { 
+                topSpacer.classList.remove('active');
+                document.body.classList.remove('spacer-active');
+            }
+        }
+    }, { passive: true });
 </script>
 </body>
 </html>

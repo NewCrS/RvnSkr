@@ -1,20 +1,14 @@
 [
   {
     "title": "Mở đầu",
-    "file": "Vol.1-I.pdf",
-    "type": "pdf",
-    "vol" : 1,
-    "chapter": 1,
-    "episode": 0
+    "file": "1-1-0.md",
+    "type": "md"
 
   },
   {
     "title": "Mùa hè ấy...",
-    "file": "Vol.1-Ep1.pdf",
-    "type": "pdf",
-    "vol" : 1,
-    "chapter": 1,
-    "episode": 1
+    "file": "1-1-1.md",
+    "type": "md"
   },
   {
     "title": "Cô là ai?",
