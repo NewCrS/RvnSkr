@@ -10,7 +10,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
     <style>
         :root { 
-            --sidebar-w: 40vw; 
+            --sidebar-w:  clamp(20px, 40vw, 480px); 
             --accent: #3b82f6; 
             --bg-main: #ffffff;
             --bg-sidebar: #ffffff;
@@ -247,12 +247,13 @@
         }
 
         @keyframes explode-out { 0% { transform: scale(0); opacity: 1; } 100% { transform: scale(500); opacity: 0; } }
-
+        /* --- RESPONSIVE LOGIC --- */
         @media (max-width: 768px) {
-            #sidebar { width: 40%; }
+            #sidebar { width: var(--sidebar-w); }
             #main-viewer.shifted { padding-left: 0; }
             #menu-toggle { font-size: 26px; top: 8px; left: 8px; }
             #pdf-container { margin-top: 50px; }
+            
             @media (orientation: portrait) {
                 canvas { 
                     clip-path: inset(6% 0 9% 0); 
@@ -261,6 +262,27 @@
                 }
             }
         }
+
+        /* Tối ưu riêng cho giao diện Ngang (Landscape) hoặc Máy tính */
+        @media (orientation: landscape) or (min-width: 1024px) {
+            :root {
+                /* Khi nằm ngang, 40% là quá rộng, ta giảm xuống tầm 25% - 30% */
+                --sidebar-w: clamp(280px, 25vw, 350px);
+            }
+            
+            /* Đẩy nội dung truyện sang phải để không bị Sidebar che khuất trên màn hình rộng */
+            #main-viewer.shifted { 
+                padding-left: var(--sidebar-w); 
+                width: calc(100% - var(--sidebar-w));
+            }
+        }
+
+/* Hoặc nếu bạn dùng máy tính bảng/máy tính có màn hình lớn */
+@media (min-width: 1024px) {
+    #sidebar { 
+        width: 320px; 
+    }
+}
 
         @keyframes screen-shake {
             0% { transform: translate(0, 0); }
