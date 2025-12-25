@@ -9,23 +9,5 @@
     "title": "Mùa hè ấy...",
     "file": "1-1-1.md",
     "type": "md"
-  },
-  {
-    "title": "Cô là ai?",
-    "file": "Vol.1-Ep2.pdf",
-    "type": "pdf",
-    "vol" : 1,
-    "chapter": 1,
-    "episode": 2
-
-  },
-  {
-    "title": "Lời thì thầm của cậu.",
-    "file": "Vol.1-Ep3.pdf",
-    "type": "pdf",
-    "vol" : 1,
-    "chapter": 1,
-    "episode": 3
-
   }
 ]
