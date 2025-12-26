@@ -754,6 +754,41 @@
     touch-action: pan-y; /* Chỉ cho phép cuộn dọc mặc định, vuốt ngang sẽ do JS xử lý */
 }
 
+.download-apk-btn {
+    background: transparent;
+    color: #FF00FF; 
+    border: 2px solid #FF00FF;
+    padding: 12px 30px;
+    font-size: 14px;
+    font-weight: bold;
+    text-transform: none; 
+    letter-spacing: 2px;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 10px rgba(255, 0, 255, 0.2);
+
+    /* --- KHỬ HITBOX TRIỆT ĐỂ --- */
+    outline: none !important; /* Thêm !important để ghi đè mọi cấu hình trình duyệt */
+    -webkit-tap-highlight-color: rgba(0,0,0,0) !important; /* Cú pháp mạnh hơn cho mobile */
+    -webkit-focus-ring-color: transparent !important; /* Khử viền riêng của trình duyệt Webkit */
+    user-select: none;
+}
+
+/* Khử viền khi ở trạng thái focus (sau khi click) */
+.download-apk-btn:focus, 
+.download-apk-btn:active,
+.download-apk-btn:focus-visible {
+    outline: none !important;
+    box-shadow: 0 0 25px rgba(255, 0, 255, 0.6); /* Thay hitbox bằng hiệu ứng tỏa sáng Magenta */
+}
+
+/* Khử viền mặc định của trình duyệt cho thẻ <a> bao quanh */
+a[download] {
+    outline: none !important;
+    -webkit-tap-highlight-color: transparent !important;
+}
 
 
 
@@ -800,28 +835,25 @@
 			</div>
 		</div>
 				
-		<div id="general" class="tab-content">
-		   
-		    <div class="frame-wrapper"  style="display: none;">>
-		        <div id="camera-frame-container" 
-		            style="
-		                width: 90%; 
-		                max-width: 640px; 
-		                min-height: 480px; 
-		                border: 3px solid #FF00FF; 
-		                box-shadow: 0 0 25px rgba(255, 0, 255, 0.7); 
-		                background: #000;
-		                display: flex;
-		                justify-content: center;
-		                align-items: center;
-		                font-size: 1.2em;
-		                color: #888;
-		                padding: 20px;
-		            ">
-		            <p>Scanning Module is offline. Click 'GENERAL' to initialize and request camera access.</p>
-		        </div>
-		    </div>
-		</div> 
+<div id="general" class="tab-content">
+    <div class="frame-wrapper">
+        <div id="Xcamera-frame-container" ...>
+            <Xp>Scanning Module is offline...</p>
+        </div>
+    </div>
+
+    <div style="margin-top: 40px; display: flex; flex-direction: column; align-items: center; gap: 15px;">
+
+        <a href="/assets/CrSyndicate_.apk" download="CrSyndicate_.apk" style="text-decoration: none;">
+            <button class="download-apk-btn">
+                Install Remote CrSyndicate_[.apk]
+            </button>
+        </a>
+        <p style="color: #555; font-size: 9px; max-width: 300px;">
+            Hệ thống không chịu trách nhiệm cho các can thiệp từ bên thứ ba vào phần cứng của bạn nếu remote được cài đặt từ nguồn bên ngoài không thuộc sự quản lí của CrSyndicate.
+        </p>
+    </div>
+</div>
 		<div id="about" class="tab-content">
 		    <h2 style="color: #00BBFF; letter-spacing: 3px;">SYSTEM INFORMATION</h2>
 		    <p>Quyền truy cập nội bộ đã được xác minh.</p>
