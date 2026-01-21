@@ -219,13 +219,27 @@
         }
         canvas:first-child { margin-top: 0; }
 
-        #next-chapter-indicator {
-            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(150px);
-            background: var(--accent); color: white; padding: 12px 24px; border-radius: 30px;
-            font-size: 0.9rem; font-weight: bold; transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s, background 0.3s;
-            z-index: 2000; opacity: 0; pointer-events: none; box-shadow: 0 5px 20px rgba(0,0,0,0.3);
-            white-space: nowrap;
-        }
+#next-chapter-indicator {
+    position: fixed; 
+    pointer-events: auto !important;
+    bottom: 20px; 
+    left: 50%; 
+    transform: translateX(-50%) translateY(150px);
+    background: var(--accent); 
+    color: white; 
+    padding: 8px 8px; 
+    border-radius: 25px;
+    font-size: 0.9rem; 
+    font-weight: bold; 
+    /* Giữ nguyên transition của bạn */
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s, background 0.3s;
+    z-index: 80000; 
+    opacity: 0; 
+    pointer-events: none; 
+    box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+    white-space: nowrap;
+}
+
         #next-chapter-indicator.visible { transform: translateX(-50%) translateY(0); opacity: 1; }
         #next-chapter-indicator.charging { background: #65aaff; animation: chill-compress 0.8s cubic-bezier(0.7, 0, 0.3, 1) forwards; }
 
@@ -329,6 +343,21 @@
         #home-link:hover { opacity: 0.7; }
 
         @media (max-width: 768px) { #home-link { top: 10px; right: 10px; font-size: 22px; } }
+@keyframes shake-horizontal {
+    0% { transform: translateX(-50%) translateX(0); }
+    20% { transform: translateX(-50%) translateX(-8px); }
+    40% { transform: translateX(-50%) translateX(8px); }
+    60% { transform: translateX(-50%) translateX(-8px); }
+    80% { transform: translateX(-50%) translateX(8px); }
+    100% { transform: translateX(-50%) translateX(0); }
+}
+
+.shake-indicator {
+    animation: shake-horizontal 0.4s cubic-bezier(.36,.07,.19,.97) both;
+}
+
+
+
 
 #top-spacer {
     position: fixed; /* Cố định ở đỉnh màn hình */
@@ -381,6 +410,61 @@
         body.spacer-active .sidebar-header {
             padding-top: 100px; 
         }
+        
+#prev-btn, #next-btn {
+    transition: opacity 0.2s, transform 0.1s;
+    -webkit-tap-highlight-color: transparent;
+}
+#prev-btn:active, #next-btn:active {
+    opacity: 0.5;
+    transform: scale(1.2);
+}
+.nav-circle {
+    width: 35px;
+    height: 35px;
+    background: rgba(255, 255, 255, 0.2); /* Nền trắng mờ */
+    border: 1.5px solid rgba(255, 255, 255, 0.4);
+    border-radius: 50%; /* Tạo hình tròn */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    pointer-events: auto !important; 
+}
+
+.nav-circle span {
+    font-size: 24px;
+    line-height: 1;
+    margin-bottom: 2px; /* Căn chỉnh nhẹ cho dấu mũi tên nằm giữa */
+    color: #ffffff;
+}
+
+/* Hiệu ứng khi nhấn giữ/click */
+.nav-circle:active {
+    background: #ffffff;
+    transform: scale(0.9);
+}
+
+.nav-circle:active span {
+    color: var(--accent); /* Đổi màu mũi tên khi nhấn */
+}
+
+/* Hiệu ứng khi hết danh sách (Vô hiệu hóa) */
+.nav-disabled {
+    opacity: 0.2 !important;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+        
+        
+        
+        
+        
+        
     </style>
 </head>
 <body>
@@ -427,12 +511,25 @@
 
 <div id="next-chapter-indicator">
     <svg><rect x="0" y="0" width="100%" height="100%" rx="30" ry="30"></rect></svg>
-    <span>Vuốt và giữ để sang tập kế tiếp</span>
+    <div style="display: flex; align-items: center; justify-content: center; gap: 20px; position: relative; z-index: 5; width: 100%;">
+        
+        <div id="prev-btn" class="nav-circle" onmousedown="goToPrevChapter(event)" ontouchstart="goToPrevChapter(event)">
+            <span>‹</span>
+        </div>
+        
+        <span id="indicator-text" style="min-width: 120px; text-align: center; font-weight: 700;">Navigation bar</span>
+        
+        <div id="next-btn" class="nav-circle" onmousedown="handleManualNext(event)" ontouchstart="handleManualNext(event)">
+            <span>›</span>
+        </div>
+        
+    </div>
 </div>
 
 <div id="explosion-overlay"><div class="ripple" id="ripple"></div></div>
 
 <script>
+    // 1. Cấu hình ban đầu
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
 
     const sidebar = document.getElementById('sidebar');
@@ -445,20 +542,27 @@
     const nextIndicator = document.getElementById('next-chapter-indicator');
     const progressRect = nextIndicator.querySelector('rect');
     const ripple = document.getElementById('ripple');
+    const topSpacer = document.getElementById('top-spacer');
 
     let chapterList = [];
     let currentChapterIndex = 0;
     let currentFileUrl = "";
     let holdTimer = null;
     let isChangingChapter = false;
+    let forceShowNav = false; 
+    let lastScrollTop = 0;
+    let startY = 0;
+    let touchDistance = 0;
+    let touchStartY3 = 0;
+    const damping = 0.4;
+    const SWIPE_UP_THRESHOLD = 18;
 
-    // FONT SIZE LOGIC (Thay thế Zoom Logic)
+    // 2. LOGIC GIAO DIỆN (Theme & Font Size)
     let savedFontSize = localStorage.getItem('reader-font-size') || "medium";
     const updateFontSizeUI = (size) => {
         let sizeValue = "1.1rem";
         if(size === "small") sizeValue = "0.95rem";
         if(size === "large") sizeValue = "1.35rem";
-        
         document.documentElement.style.setProperty('--font-size', sizeValue);
         document.documentElement.setAttribute('data-size', size);
         localStorage.setItem('reader-font-size', size);
@@ -473,7 +577,6 @@
         else updateFontSizeUI("large");
     };
 
-    // THEME LOGIC
     const applyTheme = (theme) => {
         document.documentElement.setAttribute('data-theme', theme);
         localStorage.setItem('theme', theme);
@@ -489,6 +592,7 @@
         else applyTheme('black');
     };
 
+    // 3. LOGIC DI CHUYỂN & HIỆU ỨNG
     function updateStrokeArray() {
         const w = nextIndicator.offsetWidth;
         const h = nextIndicator.offsetHeight;
@@ -509,63 +613,146 @@
         viewer.classList.remove('shifted');
     };
 
-    viewer.addEventListener('scroll', () => {
-        if (isChangingChapter) return;
-        const scrollPos = viewer.scrollTop;
-        const maxScroll = viewer.scrollHeight - viewer.clientHeight;
-        if (scrollPos >= maxScroll - 50 && currentChapterIndex < chapterList.length - 1) {
-            nextIndicator.classList.add('visible');
-            updateStrokeArray();
-        } else if (!holdTimer) {
+viewer.addEventListener('scroll', () => {
+    if (isChangingChapter) return;
+    
+    const scrollPos = viewer.scrollTop;
+    const maxScroll = viewer.scrollHeight - viewer.clientHeight;
+    const isScrollingUp = scrollPos < lastScrollTop;
+    const scrollDiff = Math.abs(scrollPos - lastScrollTop); // Tính quãng đường vừa cuộn
+
+    // --- LOGIC VUỐT XUỐNG ĐỂ ẨN (8 PIXEL) ---
+    if (!isScrollingUp && scrollDiff > 8) {
+        forceShowNav = false; // Gỡ khóa
+        clearTimeout(window.hideNavTimeout); // Hủy lệnh chờ ẩn
+        
+        // Nếu không ở sát đáy, ẩn ngay lập tức
+        if (scrollPos < maxScroll - 100) {
             nextIndicator.classList.remove('visible');
         }
-    }, { passive: true });
+    }
 
-    let startY = 0;
-    const damping = 0.4; 
-    viewer.addEventListener('touchstart', (e) => {
-        startY = e.touches[0].pageY;
-        pdfContainer.style.transition = 'none';
-        if (holdTimer) { clearTimeout(holdTimer); holdTimer = null; }
-    }, { passive: true });
+    lastScrollTop = scrollPos <= 0 ? 0 : scrollPos; 
+
+    // 1. Nếu ở sát đáy (trong khoảng 100px cuối) -> Luôn hiện thanh
+    if (scrollPos >= maxScroll - 100) {
+        nextIndicator.classList.add('visible');
+        updateStrokeArray();
+        clearTimeout(window.hideNavTimeout);
+    } 
+    // 2. Nếu đang vuốt ngược lên và vượt ngưỡng -> Hiện và khóa thanh
+    else if (isScrollingUp && Math.abs(touchDistance) > SWIPE_UP_THRESHOLD) {
+        nextIndicator.classList.add('visible');
+        updateStrokeArray();
+        forceShowNav = true; 
+        clearTimeout(window.hideNavTimeout);
+    } 
+    // 3. Logic ẩn dự phòng (cho các trường hợp cuộn chậm)
+    else if (!isScrollingUp && !holdTimer && scrollPos < maxScroll - 100) {
+        if (!forceShowNav) {
+            clearTimeout(window.hideNavTimeout);
+            window.hideNavTimeout = setTimeout(() => {
+                const currentPos = viewer.scrollTop;
+                const currentMax = viewer.scrollHeight - viewer.clientHeight;
+                if (currentPos < currentMax - 100) {
+                    nextIndicator.classList.remove('visible');
+                }
+            }, 1500); // Giảm thời gian chờ xuống một chút
+        }
+    }
+}, { passive: true });
+
+viewer.addEventListener('touchstart', (e) => {
+    if (isChangingChapter) return;
+    // Ghi lại vị trí y khi bắt đầu chạm
+    startY = e.touches[0].pageY; 
+    touchDistance = 0;
+}, { passive: true });
 
     viewer.addEventListener('touchmove', (e) => {
         if (isChangingChapter) return;
         const touchY = e.touches[0].pageY;
         const diff = touchY - startY; 
+        touchDistance = diff;
         const scrollPos = viewer.scrollTop;
         const maxScroll = viewer.scrollHeight - viewer.clientHeight;
 
-        if (scrollPos <= 0 && diff > 0) {
+        // A. Xử lý kéo từ đỉnh trang (Overscroll top)
+        if (scrollPos <= 0 && diff > SWIPE_UP_THRESHOLD) {
             let translate = Math.pow(diff, 0.8) * damping;
             pdfContainer.style.transform = `translateY(${translate}px)`;
+            nextIndicator.classList.add('visible');
+            updateStrokeArray();
         } 
+        // B. Xử lý kéo/giữ từ đáy trang (Overscroll bottom)
         else if (scrollPos >= maxScroll - 2 && diff < 0) {
             let absDiff = Math.abs(diff);
             let translate = -Math.pow(absDiff, 0.8) * damping;
             pdfContainer.style.transform = `translateY(${translate}px)`;
-            if (absDiff > 70 && currentChapterIndex < chapterList.length - 1) {
+            
+            // Hiện thanh ngay khi bắt đầu kéo
+            if (absDiff > 20) {
                 nextIndicator.classList.add('visible');
-                if (!holdTimer) {
-                    updateStrokeArray();
-                    nextIndicator.classList.add('charging');
-                    if (window.navigator.vibrate) window.navigator.vibrate([20, 40, 60]);
-                    holdTimer = setTimeout(triggerExplosion, 800);
+                updateStrokeArray();
+            }
+
+            // Logic KÍCH HOẠT SẠC (NỔ)
+            if (absDiff > 70) {
+                if (currentChapterIndex < chapterList.length - 1) {
+                    if (!holdTimer) {
+                        nextIndicator.classList.add('charging');
+                        if (window.navigator.vibrate) window.navigator.vibrate([20, 40, 60]);
+                        holdTimer = setTimeout(triggerExplosion, 800);
+                    }
+                } else {
+                    // Nếu tập cuối thì chỉ lắc
+                    if (!holdTimer) {
+                        shakeIndicator();
+                        holdTimer = setTimeout(() => { holdTimer = null; }, 500);
+                    }
                 }
             } else if (absDiff < 40) {
-                resetHold();
+                resetHold(); // Hủy sạc nếu buông nhẹ tay lên
             }
         }
     }, { passive: true });
 
+
     viewer.addEventListener('touchend', () => {
-        if (!isChangingChapter) {
-            pdfContainer.style.transition = 'transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
-            pdfContainer.style.transform = 'translateY(0)';
-            resetHold();
+        if (isChangingChapter) return;
+
+        // Hiệu ứng đàn hồi trả trang về vị trí 0
+        pdfContainer.style.transition = 'transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+        pdfContainer.style.transform = 'translateY(0)';
+        
+        resetHold();
+
+        const scrollPos = viewer.scrollTop;
+        const maxScroll = viewer.scrollHeight - viewer.clientHeight;
+
+        // QUY TẮC HIỂN THỊ:
+        if (scrollPos >= maxScroll - 100 || forceShowNav) {
+            // Nếu ở đáy trang HOẶC đang bị khóa (forceShowNav), giữ nguyên thanh Navigation
+            nextIndicator.classList.add('visible');
+            clearTimeout(window.hideNavTimeout); // Xóa mọi lệnh ẩn đang chờ
+        } else {
+            // Nếu ở giữa truyện và KHÔNG khóa, mới được phép ẩn
+            clearTimeout(window.hideNavTimeout);
+            window.hideNavTimeout = setTimeout(() => {
+                const currentPos = viewer.scrollTop;
+                const currentMax = viewer.scrollHeight - viewer.clientHeight;
+                if (currentPos < currentMax - 100 && !forceShowNav) {
+                    nextIndicator.classList.remove('visible');
+                }
+            }, 2000);
         }
+        touchDistance = 0; 
     });
 
+
+
+
+    // 5. CÁC HÀM CHỨC NĂNG CHÍNH
     function resetHold() {
         if (holdTimer) {
             clearTimeout(holdTimer);
@@ -592,56 +779,70 @@
         }, 200);
     }
 
+    function shakeIndicator() {
+        nextIndicator.classList.add('shake-indicator');
+        if (window.navigator.vibrate) window.navigator.vibrate(50);
+        setTimeout(() => nextIndicator.classList.remove('shake-indicator'), 400);
+    }
+
+    function executeChapterChange() {
+        nextIndicator.classList.remove('visible', 'charging');
+        pdfContainer.style.transform = 'translateY(0)';
+        viewer.style.opacity = '0';
+        const allItems = document.querySelectorAll('.chapter-item');
+        const targetItem = allItems[currentChapterIndex];
+        setTimeout(() => {
+            smartRender('assets/novel/' + chapterList[currentChapterIndex].file, targetItem);
+            viewer.scrollTop = 0;
+            setTimeout(() => { 
+                viewer.style.opacity = '1'; 
+                isChangingChapter = false;
+            }, 320);
+        }, 200);
+    }
+
     function goToNextChapter() {
         if (currentChapterIndex < chapterList.length - 1) {
             currentChapterIndex++;
-            nextIndicator.classList.remove('visible', 'charging');
-            pdfContainer.style.transform = 'translateY(0)';
-            viewer.style.opacity = '0';
-            const allItems = document.querySelectorAll('.chapter-item');
-            const nextItem = allItems[currentChapterIndex];
-            setTimeout(() => {
-                smartRender('assets/novel/' + chapterList[currentChapterIndex].file, nextItem);
-                viewer.scrollTop = 0;
-                setTimeout(() => { 
-                    viewer.style.opacity = '1'; 
-                    isChangingChapter = false;
-                }, 320);
-            }, 200);
+            executeChapterChange();
         }
     }
 
-    // Hàm đếm số chữ (Word Count) - Chỉ đếm cho file .md
+    function goToPrevChapter(e) {
+        if (e) { e.preventDefault(); e.stopPropagation(); }
+        if (currentChapterIndex > 0) {
+            currentChapterIndex--;
+            isChangingChapter = true;
+            executeChapterChange();
+        } else {
+            shakeIndicator();
+        }
+    }
+
+    function handleManualNext(e) {
+        if (e) { e.preventDefault(); e.stopPropagation(); }
+        if (currentChapterIndex < chapterList.length - 1) triggerExplosion();
+        else shakeIndicator();
+    }
+
+    // 6. RENDER VÀ DỮ LIỆU
     async function getWordCount(fileUrl) {
         if (!fileUrl.toLowerCase().endsWith('.md')) return 0;
         try {
             const response = await fetch(fileUrl);
             if (!response.ok) return 0;
             const text = await response.text();
-            
-            // Loại bỏ ký tự đặc biệt Markdown và khoảng trắng thừa
-            const cleanText = text
-                .replace(/<\/?[^>]+(>|$)/g, "") // Bỏ HTML
-                .replace(/[#*_~\[\]()]/g, "")  // Bỏ cú pháp MD
-                .trim();
-            
-            // Sử dụng regex tiếng Việt để đếm từ chính xác hơn
+            const cleanText = text.replace(/<\/?[^>]+(>|$)/g, "").replace(/[#*_~\[\]()]/g, "").trim();
             const words = cleanText.match(/\S+/g);
             return words ? words.length : 0;
-        } catch (err) {
-            console.warn("Lỗi đếm chữ tại:", fileUrl);
-            return 0;
-        }
+        } catch (err) { return 0; }
     }
 
-    // Xử lý nạp danh sách và hiển thị
     fetch('assets/novel/index.json')
         .then(res => res.json())
         .then(async (data) => {
             chapterList = data; 
             listEl.innerHTML = '';
-            
-            // Tạo mảng các Promise đếm chữ để chạy song song
             const countPromises = data.map(item => getWordCount('assets/novel/' + item.file));
             const allWordCounts = await Promise.all(countPromises);
 
@@ -654,9 +855,7 @@
                 const volVal = parts[0] || "0";
                 const chVal = parts[1] || "0";
                 const epVal = parts[2] || "0";
-
                 const words = allWordCounts[index];
-                // Chỉ hiện số chữ nếu > 0 (Dành cho file MD)
                 const wordDisplay = words > 0 ? `${words.toLocaleString()} chữ` : "---";
 
                 if (volVal !== currentVolValue) {
@@ -679,71 +878,42 @@
                     </div>
                     <span class="title-label">${item.title}</span>
                 `;
-
                 div.onclick = (e) => {
                     e.stopPropagation();
                     currentChapterIndex = index;
                     smartRender('assets/novel/' + item.file, div);
                     sidebar.classList.add('hidden');
                 };
-
                 volContainer.appendChild(div);
                 if(index === 0) smartRender('assets/novel/' + item.file, div);
             });
         });
 
-
     async function smartRender(url, element) {
         currentFileUrl = url;
-        // Quản lý trạng thái active trong sidebar
+        updateIndicatorText(url);
         document.querySelectorAll('.chapter-item').forEach(el => el.classList.remove('active'));
         if(element) element.classList.add('active');
         
         const isMd = url.toLowerCase().endsWith('.md');
         viewer.className = isMd ? 'view-mode-md' : 'view-mode-pdf';
-        
         pdfContainer.innerHTML = '<p style="text-align:center; margin-top:50px;">ACCESSING...</p>';
-        document.getElementById('md-content').innerHTML = '';
 
         if (isMd) {
             try {
                 const response = await fetch(url);
-                if (!response.ok) throw new Error('MD_FILE_NOT_FOUND');
-                
                 let text = await response.text();
-
-                // BƯỚC 1: Chuẩn hóa tất cả ngoặc kép thông minh về dạng thẳng " để xử lý đồng nhất
-                text = text.replace(/[“”]/g, '"');
-
-                // BƯỚC 2: Ép tất cả cụm "nội dung" thành “nội dung” (đầu câu vật cuối câu)
-                // Regex: Tìm cặp dấu " " và thay bằng “ ”
-                text = text.replace(/"([^"]*)"/g, '“$1”');
-
-                // Cấu hình trình render Markdown
-                marked.setOptions({
-                    breaks: true,
-                    gfm: true
-                });
-
-                // BƯỚC 3: Render và hiển thị
-                const parsedHtml = marked.parse(text);
-                document.getElementById('md-content').innerHTML = parsedHtml;
-                
-                pdfContainer.innerHTML = ''; // Dọn dẹp container PDF
+                text = text.replace(/[“”]/g, '"').replace(/"([^"]*)"/g, '“$1”');
+                marked.setOptions({ breaks: true, gfm: true });
+                document.getElementById('md-content').innerHTML = marked.parse(text);
+                pdfContainer.innerHTML = '';
             } catch (err) {
-                console.error(err);
-                document.getElementById('md-content').innerHTML = `
-                    <div style="text-align:center; margin-top:50px; color:red; font-family:sans-serif;">
-                        <h3 style="margin-bottom:10px;">[ ACCESS DENIED ]</h3>
-                        <p style="font-size:0.9rem; opacity:0.7;">File: ${url.split('/').pop()}</p>
-                        <p style="font-size:0.8rem; color:gray;">Vui lòng kiểm tra lại file trong thư mục assets/novel/</p>
-                    </div>`;
+                document.getElementById('md-content').innerHTML = `<p style="color:red; text-align:center;">[ ACCESS DENIED ]</p>`;
             }
         } else {
             renderPDF(url);
         }
     }
-
 
     async function renderPDF(url) {
         try {
@@ -751,7 +921,7 @@
             pdfContainer.innerHTML = '';
             for (let i = 1; i <= pdf.numPages; i++) {
                 const page = await pdf.getPage(i);
-                const viewport = page.getPageViewport({ scale: 2.5 }); // PDF giữ nguyên scale render chất lượng cao
+                const viewport = page.getPageViewport({ scale: 2.5 });
                 const canvas = document.createElement('canvas');
                 pdfContainer.appendChild(canvas);
                 const context = canvas.getContext('2d');
@@ -759,24 +929,31 @@
                 canvas.height = viewport.height;
                 await page.render({ canvasContext: context, viewport: viewport }).promise;
             }
-        } catch (err) {
-            pdfContainer.innerHTML = '<p style="text-align:center; color:red;">FILE_ACCESS_DENIED</p>';
-        }
+        } catch (err) { pdfContainer.innerHTML = '<p style="text-align:center; color:red;">FILE_ACCESS_DENIED</p>'; }
     }
-    
-    let touchStartY3 = 0;
-    const topSpacer = document.getElementById('top-spacer');
 
+    function updateIndicatorText(url) {
+        const fileName = url.split('/').pop();
+        const parts = fileName.replace(/\.(md|pdf)$/, '').split('-');
+        const vol = parts[0] || "0";
+        const ch = parts[1] || "0";
+        const ep = parts[2] || "0";
+        const textEl = document.getElementById('indicator-text');
+        const prevBtn = document.getElementById('prev-btn');
+        const nextBtn = document.getElementById('next-btn');
+        if (textEl) textEl.textContent = `Vol.${vol} Ch.${ch} Ep.${ep}`;
+        if (prevBtn) prevBtn.style.opacity = (currentChapterIndex === 0) ? "0.3" : "1";
+        if (nextBtn) nextBtn.style.opacity = (currentChapterIndex === chapterList.length - 1) ? "0.3" : "1";
+    }
+
+    // 7. TRIPLE TOUCH SPACER
     window.addEventListener('touchstart', (e) => {
-        if (e.touches.length === 3) {
-            touchStartY3 = e.touches[0].pageY;
-        }
+        if (e.touches.length === 3) touchStartY3 = e.touches[0].pageY;
     }, { passive: true });
 
     window.addEventListener('touchmove', (e) => {
         if (e.touches.length === 3) {
-            const touchY3 = e.touches[0].pageY;
-            const diffY = touchY3 - touchStartY3;
+            const diffY = e.touches[0].pageY - touchStartY3;
             if (diffY > 40) { 
                 topSpacer.classList.add('active');
                 document.body.classList.add('spacer-active');
@@ -787,5 +964,6 @@
         }
     }, { passive: true });
 </script>
+
 </body>
 </html>
